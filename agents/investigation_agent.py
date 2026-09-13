@@ -1,20 +1,4 @@
-"""
-investigation_agent.py
-======================
-Main AI Investigation Agent (step 1 of the pipeline).
-
-Pipeline executed inside ``run()``:
-    1. Extract IOCs from the raw message (regex, deterministic).
-    2. Run structural URL analysis on every detected URL.
-    3. Ask the LLM for a verdict (is_scam / confidence / threat_type /
-       summary), giving it the extracted entities as evidence.
-    4. Validate the LLM output (required keys, sane confidence).
-    5. Compute the composite risk score via the RiskEngine.
-    6. Package everything into a validated InvestigationResult.
-
-The InvestigationAgent runs on EVERY scammer message; the API then
-merges new IOCs into the session's accumulated investigation.
-"""
+"""Investigation agent - IOC + verdict + risk"""
 
 from llm.llm_client import LLMClient
 
@@ -81,10 +65,8 @@ class InvestigationAgent:
 
         print("\n[1/5] Extracting entities...")
 
-        # ----------------------------------------------------------
         # 1. Deterministic IOC extraction (never hallucinated -
         #    regexes only, so the LLM cannot invent evidence).
-        # ----------------------------------------------------------
 
         entities = EntityExtractor.extract(
             message
@@ -92,9 +74,7 @@ class InvestigationAgent:
 
         print("[2/5] Analyzing URLs...")
 
-        # ----------------------------------------------------------
         # 2. Structural URL analysis (HTTPS? shortener? subdomains?)
-        # ----------------------------------------------------------
 
         url_analysis = [
 
@@ -106,11 +86,9 @@ class InvestigationAgent:
 
         print("[3/5] Investigating with AI...")
 
-        # ----------------------------------------------------------
         # 3. Build the LLM prompt = system rules (from file) +
         #    the suspicious message + extracted entities as evidence.
         #    The model returns ONLY the JSON verdict.
-        # ----------------------------------------------------------
 
         final_prompt = f"""
 {self.prompt}
@@ -159,9 +137,7 @@ Return ONLY valid JSON.
             max_tokens=800,
         )
 
-        # ----------------------------
         # 4. Validate LLM Response
-        # ----------------------------
         # Guard against malformed / lazy model output before any
         # downstream code touches the dict.
 
@@ -204,10 +180,8 @@ Return ONLY valid JSON.
 
         print("[4/5] Calculating Risk...")
 
-        # ----------------------------------------------------------
         # 5. Risk scoring: combine LLM verdict + extracted entities +
         #    URL analysis into one explainable 0-100 score.
-        # ----------------------------------------------------------
 
         risk = RiskEngine.calculate(
 
@@ -219,10 +193,8 @@ Return ONLY valid JSON.
 
         )
 
-        # ----------------------------------------------------------
         # 6. Assemble the final result object:
         #    LLM verdict + extracted IOCs + risk metadata.
-        # ----------------------------------------------------------
 
         result.update({
 

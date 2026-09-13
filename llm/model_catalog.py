@@ -1,41 +1,4 @@
-"""
-model_catalog.py
-================
-Curated LLM model catalogs for every supported provider.
-
-The catalog feeds TWO consumers:
-
-* ``GET /api/llm/models`` - a diagnostic listing of what the
-  server can call (the dashboard has no picker any more);
-* the fallback documentation - spare models tried automatically when
-  the primary model fails (see ``LLMClient`` and the
-  ``*_FALLBACK_MODELS`` variables in ``.env.example``).
-
-Where models come from (merged in this order, first wins per id)
------------------------------------------------------------------
-1. **Built-in curated lists** below (fast, well-tested defaults).
-2. **``llm_models.json``** at the repository root - the editable file
-   where you paste extra NVIDIA NIM model ids fetched from the API
-   (https://build.nvidia.com or ``GET /v1/models``). Accepts::
-
-       {
-         "nvidia": ["org/model-id", {"id": "...", "label": "..."}],
-         "openrouter": [...]
-       }
-
-   A ``{"models": {...}}`` wrapper is accepted too. Unknown shapes are
-   ignored (never crash the server over a hand-edited file).
-3. **Env extras** - ``NVIDIA_NIM_MODELS`` / ``OPENROUTER_MODELS``
-   (comma-separated ids) for models that only exist in one deployment.
-4. **Live fetch** (``GET /api/llm/models?refresh=true``) - queries the
-   provider's ``/models`` endpoint and lists what the account can
-   actually call right now. Results are cached for a few minutes.
-
-Any non-empty model string is ACCEPTED at runtime (select + analyze),
-even when it is not in the catalog - new NIM releases keep working
-without a code change. Unknown ids simply show without a friendly
-label until they are added to ``llm_models.json``.
-"""
+"""Model catalog"""
 
 from __future__ import annotations
 
@@ -56,9 +19,7 @@ from config import (
 logger = logging.getLogger("TraceAI-ModelCatalog")
 
 
-# ----------------------------------------------------------------------
 # Built-in curated catalogs
-# ----------------------------------------------------------------------
 # ``speed`` is advisory for the picker UI: "lightning" = smallest/fastest
 # instruction models (best for snappy honeypot replies), "fast" = quick
 # mid-size, "balanced" = quality/latency trade-off, "powerful" = largest
@@ -125,9 +86,7 @@ LIVE_CACHE_TTL = 300
 _live_cache: dict = {}
 
 
-# ----------------------------------------------------------------------
 # Helpers
-# ----------------------------------------------------------------------
 
 def _custom_models_path() -> Path:
     """Absolute path of the editable ``llm_models.json`` file."""
@@ -273,9 +232,7 @@ def _merge_preserving_first(*lists: list) -> list:
     return list(merged.values())
 
 
-# ----------------------------------------------------------------------
 # Public API
-# ----------------------------------------------------------------------
 
 def get_models(provider: str | None) -> list:
     """

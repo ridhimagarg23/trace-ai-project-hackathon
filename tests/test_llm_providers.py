@@ -1,30 +1,4 @@
-"""
-test_llm_providers.py
-=====================
-Offline unit tests for the multi-provider LLM layer (OpenRouter +
-NVIDIA NIM) and its FIXED request flow:
-
-    OpenRouter (LLM_MODEL)
-      -> no answer within OPENROUTER_DEADLINE (15 s)?
-         -> NVIDIA: nvidia/nemotron-3-ultra-550b-a55b
-           -> NVIDIA: nvidia/nemotron-3.5-lightning-30b-a3b
-
-* provider normalization / aliases (``nim`` -> ``nvidia``);
-* active provider/model resolution + runtime switching;
-* ``LLMClient.attempt_chain()`` ordering (OpenRouter -> NVIDIA stage);
-* the 15 s soft deadline (a slow OpenRouter is abandoned, never
-  retried, and the NVIDIA stage answers);
-* fallback on invalid JSON / unknown-model errors (next spare
-  answers, the failure is recorded, the call succeeds);
-* total failure raises RuntimeError listing every tried model;
-* ``GET /api/llm/status``, ``GET /api/llm/models`` and
-  ``POST /api/llm/select`` behaviour (no network, no secrets leaked).
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key NVIDIA_NIM_API_KEY=test-key \
-        python -m unittest discover -s tests
-"""
+"""Tests for llm providers"""
 
 import unittest
 from contextlib import contextmanager

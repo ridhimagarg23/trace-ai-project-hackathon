@@ -1,16 +1,4 @@
-"""
-report_agent.py
-===============
-AI Report Generator (step 5 of the pipeline).
-
-Compiles the accumulated investigation facts plus the honeypot
-dialogue into a polished, analyst-ready markdown report with the
-standard sections (executive summary, threat type, risk assessment,
-IOCs, findings, conversation summary, recommended actions).
-
-The returned ReportResult is stored on the API session and rendered
-in the dashboard's report modal (markdown -> HTML on the client).
-"""
+"""Report agent - builds markdown report"""
 
 from llm.llm_client import LLMClient
 
@@ -75,11 +63,9 @@ class ReportAgent:
             If the LLM output is missing any required key.
         """
 
-        # ----------------------------------------------------------
         # Build the prompt: system rules + all facts the report is
         # allowed to mention. The prompt forbids inventing details,
         # so the report is always traceable to real evidence.
-        # ----------------------------------------------------------
 
         final_prompt = f"""
 {self.prompt}
@@ -145,9 +131,7 @@ Return ONLY valid JSON.
             max_tokens=2500,
         )
 
-        # ----------------------------
         # Validate LLM Response
-        # ----------------------------
 
         required_keys = [
             "title",

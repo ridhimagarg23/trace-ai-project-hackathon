@@ -1,15 +1,4 @@
-// constants.js
-// =============
-// Shared UI constants + tiny helpers for the TraceAI dashboard.
-//
-// The values here mirror the JSON contract produced by the backend
-// (backend/api.py / POST /analyze). Whenever you change the shape of
-// an API response, keep INITIAL_DASHBOARD_DATA in sync - the empty
-// state is what the dashboard renders before the first /analyze call.
-// -------------------------------------------------------------------
-
-// Full empty-state dashboard payload. Spreading this object into the
-// API response gives every panel a safe default shape so the UI never
+// UI constants
 // crashes while waiting for real data.
 export const INITIAL_DASHBOARD_DATA = {
   session: {

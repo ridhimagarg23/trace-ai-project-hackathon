@@ -1,30 +1,4 @@
-"""
-conversation_agent.py
-=====================
-Adaptive Conversation Agent (step 4 of the pipeline).
-
-This agent writes the *persona's next chat reply* to the scammer.
-It is deliberately narrow: the strategy brain (AdaptiveInvestigation
-Engine) has already decided WHO the persona is, WHAT objective to
-pursue and WHICH behavioural style to use - this agent only has to
-sound like a believable human pursuing that objective.
-
-Two prompt channels are supported:
-
-* ``run()``          - the dashboard channel, driven by
-                       ``prompts/conversation_prompt.txt`` (used by
-                       POST /analyze).
-* ``run_telegram()`` - the live Telegram channel, driven by
-                       ``prompts/telegram_assistant_prompt.txt``.
-                       Identical plumbing, but the system rules are
-                       chat-specific (Telegram register, live-chat
-                       safety override) and the prompt additionally
-                       carries the Telegram channel context.
-
-Safety rules live in the prompts: never reveal personal/financial
-data, never admit being an AI or an investigation, keep replies short
-(< 35 words) and reply in the scammer's language.
-"""
+"""Conversation agent - generates persona replies"""
 
 from llm.llm_client import LLMClient
 
@@ -76,9 +50,7 @@ class ConversationAgent:
         # Lazily-populated cache for the Telegram system rules.
         self._telegram_prompt = None
 
-    # ----------------------------------------------------------
     # Prompt handling
-    # ----------------------------------------------------------
 
     def _get_telegram_prompt(self) -> str:
         """
@@ -248,9 +220,7 @@ Return ONLY valid JSON.
             max_tokens=800,
         )
 
-        # ----------------------------
         # Validate LLM Response
-        # ----------------------------
 
         required_keys = [
             "reply",
@@ -283,9 +253,7 @@ Return ONLY valid JSON.
             **result
         )
 
-    # ----------------------------------------------------------
     # Public entry points
-    # ----------------------------------------------------------
 
     def run(
         self,

@@ -1,18 +1,4 @@
-// IntegrationsModal.jsx
-// =====================
-// "Connected Apps" modal for SCAMNET: shows the honest connection
-// status of the three external applications (Telegram, Google Sheets,
-// Google Drive) served by GET /api/integrations.
-//
-// Honesty rules (mirroring integrations/base.py on the server):
-//  * Statuses are ALWAYS fetched from the backend - never invented
-//    locally. A card only shows "Connected" when the server reports
-//    connected=true (a real authenticated session).
-//  * If the backend is unreachable the cards show "Status unknown" -
-//    never a fake connected/disconnected state.
-//  * The Connect button forwards to POST /api/integrations/{id}/connect
-//    and renders the server's honest outcome: 501 -> "Setup required"
-//    (auth flow unavailable), 409 -> missing/invalid server-side
+// Integrations modal
 //    credentials, 502 -> a real attempt failed (e.g. Google rejected the
 //    key). It never simulates a successful authentication.
 //  * The server's ``setup_instructions`` are shown for apps that are not
@@ -27,7 +13,6 @@
 // Visual pattern: same modal shell as ReportModal (modal-overlay /
 // modal-card / modal-header / modal-body / modal-footer) + namespaced
 // .integ-* card styles in globals.css.
-// -------------------------------------------------------------------
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {

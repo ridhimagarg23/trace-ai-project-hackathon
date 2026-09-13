@@ -1,44 +1,4 @@
-"""
-api.py
-======
-TraceAI Production FastAPI Backend
-
-This is the HTTP surface of the whole platform. The Next.js dashboard
-talks to these endpoints:
-
-    POST /analyze   - feed one scammer message into the pipeline
-    POST /new       - reset a session (start a fresh case)
-    GET  /health    - liveness probe for hosting platforms
-
-    GET  /api/integrations                    - honest status of the
-                                                external-app integration
-                                                layer (SCAMNET)
-    POST /api/integrations/{id}/connect       - attempt a real connect
-                                                (Telegram: getMe verify;
-                                                501 while a provider's
-                                                auth flow is not built)
-
-    GET  /api/telegram/messages               - fetch recent incoming
-                                                Telegram messages (test)
-    POST /api/telegram/send-test              - send one test message
-                                                to a chat_id
-                                                (see backend/telegram_routes.py)
-
-One /analyze turn runs this pipeline:
-
-    scammer message
-        -> InvestigationAgent        (IOC regex + URL checks + LLM verdict
-                                       + deterministic risk score)
-        -> AdaptiveInvestigationEngine (persona profile + objective ladder)
-        -> ConversationAgent         (persona's next reply)
-        -> MemoryManager             (archive case facts to JSON)
-        -> ReportAgent               (markdown incident report)
-        -> JSON payload for the dashboard
-
-Session state (per session_id) lives in the in-memory ``sessions``
-dict, so a multi-turn undercover conversation is stateful across
-requests but resets when the process restarts.
-"""
+"""FastAPI backend - main routes"""
 
 import datetime
 import logging
@@ -89,9 +49,7 @@ from integrations.base import (
 from backend.telegram_routes import router as telegram_router
 
 
-# --------------------------------------------------
 # Setup Logging
-# --------------------------------------------------
 
 logging.basicConfig(
     level=logging.INFO,
@@ -101,9 +59,7 @@ logging.basicConfig(
 logger = logging.getLogger("TraceAI-API")
 
 
-# --------------------------------------------------
 # Initialize FastAPI App
-# --------------------------------------------------
 
 app = FastAPI(
     title="TraceAI API",
@@ -112,9 +68,7 @@ app = FastAPI(
 )
 
 
-# --------------------------------------------------
 # Enable CORS for direct (cross-origin) API consumers
-# --------------------------------------------------
 # The bundled Next.js dashboard proxies same-origin through
 # /backend-api (see frontend/next.config.mjs), so it needs no CORS
 # entry. These origins cover local development and deployments that
@@ -131,9 +85,7 @@ app.add_middleware(
 )
 
 
-# --------------------------------------------------
 # Register integration sub-routers
-# --------------------------------------------------
 # Telegram test endpoints (GET /api/telegram/messages,
 # POST /api/telegram/send-test) live in backend/telegram_routes.py.
 
@@ -143,9 +95,7 @@ app.include_router(telegram_router)
 
 
 
-# --------------------------------------------------
 # Session Memory (In-Memory Dictionary)
-# --------------------------------------------------
 
 # Stores state for active investigations, keyed by session_id.
 #
@@ -197,9 +147,7 @@ class LLMSelectRequest(BaseModel):
     """Model id to activate (defaults to the provider's default)."""
 
 
-# --------------------------------------------------
 # Helper Functions
-# --------------------------------------------------
 
 def get_current_time_str() -> str:
     return datetime.datetime.now().strftime("%I:%M %p")
@@ -416,9 +364,7 @@ def build_evidence(investigation) -> list:
 
     evidence = []
 
-    # --------------------------------------------------
     # Website URLs
-    # --------------------------------------------------
 
     if investigation.urls:
         for url in investigation.urls:
@@ -434,9 +380,7 @@ def build_evidence(investigation) -> list:
             "status": "pending"
         })
 
-    # --------------------------------------------------
     # Phone numbers
-    # --------------------------------------------------
 
     if investigation.phone_numbers:
         for phone in investigation.phone_numbers:
@@ -452,9 +396,7 @@ def build_evidence(investigation) -> list:
             "status": "pending"
         })
 
-    # --------------------------------------------------
     # Email Addresses
-    # --------------------------------------------------
 
     if investigation.emails:
         for email in investigation.emails:
@@ -470,9 +412,7 @@ def build_evidence(investigation) -> list:
             "status": "pending"
         })
 
-    # --------------------------------------------------
     # UPI IDs
-    # --------------------------------------------------
 
     if investigation.upi_ids:
         for upi in investigation.upi_ids:
@@ -488,9 +428,7 @@ def build_evidence(investigation) -> list:
             "status": "pending"
         })
 
-    # --------------------------------------------------
     # Bank Names
-    # --------------------------------------------------
 
     if investigation.bank_names:
         for bank in investigation.bank_names:
@@ -503,9 +441,7 @@ def build_evidence(investigation) -> list:
     return evidence
 
 
-# --------------------------------------------------
 # ENDPOINTS
-# --------------------------------------------------
 
 @app.get("/")
 def root():
@@ -548,9 +484,7 @@ def health():
     }
 
 
-# --------------------------------------------------
 # LLM provider / model selection endpoints
-# --------------------------------------------------
 # These endpoints describe/override the LLM selection for operators.
 # The dashboard no longer renders a picker: the engine order is fixed
 # (OpenRouter first, NVIDIA nemotron stage as the fallback), so these
@@ -742,9 +676,7 @@ def llm_select(request: LLMSelectRequest):
     return payload
 
 
-# --------------------------------------------------
 # SCAMNET Integration Endpoints
-# --------------------------------------------------
 # Honest status of the external-app integration layer
 # (Telegram / Google Sheets / Google Drive / Gmail - see integrations/).
 #
@@ -777,9 +709,7 @@ def integrations_status():
     return get_all_integration_statuses()
 
 
-# ----------------------------------------------------------
 # Telegram auto-start (the reply loop must not need a manual click)
-# ----------------------------------------------------------
 # A connected bot that is not polling is indistinguishable from a broken
 # bot: the operator sends a message and nothing ever comes back. So the
 # loop is brought up automatically - at boot when the token works, and
@@ -1135,9 +1065,7 @@ def analyze(request: InvestigationRequest):
 
     try:
 
-        # --------------------------------------------------
         # 1. Initialize or retrieve active session state
-        # --------------------------------------------------
         # First message of a session creates the empty state bundle;
         # later messages reuse it so IOCs, persona and objectives
         # accumulate across turns.
@@ -1170,9 +1098,7 @@ def analyze(request: InvestigationRequest):
         engine = state_data["engine"]
         timeline = state_data["timeline"]
 
-        # --------------------------------------------------
         # 2. Run core investigation agent
-        # --------------------------------------------------
 
         stage_started = time.perf_counter()
         investigation_agent = InvestigationAgent(
@@ -1183,10 +1109,8 @@ def analyze(request: InvestigationRequest):
 
         if state_data["investigation"] is None:
 
-            # -------------------------------------------
             # FIRST TURN of a session:
             # initialize engine, persona profile, timeline
-            # -------------------------------------------
 
             state_data["investigation"] = investigation_result
 
@@ -1219,12 +1143,10 @@ def analyze(request: InvestigationRequest):
 
         else:
 
-            # -------------------------------------------
             # SUBSEQUENT TURNS:
             # merge newly extracted IOCs into the
             # accumulated investigation, then re-score risk
             # on the full evidence set
-            # -------------------------------------------
 
             existing_inv = state_data["investigation"]
 
@@ -1291,9 +1213,7 @@ def analyze(request: InvestigationRequest):
                 )
             )
 
-            # --------------------------------------------------
             # Recalculate risk scoring with all accumulated evidence
-            # --------------------------------------------------
             # The risk score must reflect everything collected so far
             # (this message + all previous ones in the session).
 
@@ -1349,10 +1269,8 @@ def analyze(request: InvestigationRequest):
             # delivered the evidence requested by the active objective.
             engine_state = engine.get_state()
 
-        # --------------------------------------------------
         # 3. Record the scammer message, then generate the
         #    persona's reply via the ConversationAgent
-        # --------------------------------------------------
 
         session.add_scammer_message(message)
 
@@ -1417,9 +1335,7 @@ def analyze(request: InvestigationRequest):
             )
         })
 
-        # --------------------------------------------------
         # 4. Archive the case facts into threat memory (JSON)
-        # --------------------------------------------------
 
         stage_started = time.perf_counter()
         MemoryManager().save(
@@ -1427,9 +1343,7 @@ def analyze(request: InvestigationRequest):
         )
         _log_stage(session_id, "memory", stage_started)
 
-        # --------------------------------------------------
         # 5. Generate the latest investigation report
-        # --------------------------------------------------
         # The report is re-generated each turn, so the stored report
         # normally reflects the newest accumulated evidence. It is a
         # presentation layer, though: a report-provider failure must not
@@ -1468,9 +1382,7 @@ def analyze(request: InvestigationRequest):
         finally:
             _log_stage(session_id, "report", stage_started)
 
-        # --------------------------------------------------
         # 5b. Best-effort export to the connected Google apps
-        # --------------------------------------------------
         # Only runs when Drive / Sheets report a genuine, health-verified
         # session; otherwise each app is reported as "skipped". Failures
         # are logged and never break the investigation. The Drive export
@@ -1490,9 +1402,7 @@ def analyze(request: InvestigationRequest):
             or state_data.get("drive_file_id")
         )
 
-        # --------------------------------------------------
         # 6. Construct final output JSON (UI-shaped payload)
-        # --------------------------------------------------
 
         persona_profile = state_data["persona_profile"]
 
@@ -1506,9 +1416,7 @@ def analyze(request: InvestigationRequest):
             investigation_result
         )
 
-        # --------------------------------------------------
         # Map complete session log to chat bubbles
-        # --------------------------------------------------
         # Renders every stored turn (scammer + persona) into the
         # message shape the ChatPanel expects. "role" is what the UI
         # keys on: "scammer" = left bubble, "user" = right bubble
@@ -1560,9 +1468,7 @@ def analyze(request: InvestigationRequest):
                 )
             })
 
-        # --------------------------------------------------
         # 7. Final Response
-        # --------------------------------------------------
         # The dashboard consumes this contract directly:
         #
         #   session_id     - id of the undercover session
@@ -1574,7 +1480,6 @@ def analyze(request: InvestigationRequest):
         #
         # See frontend/lib/constants.js (INITIAL_DASHBOARD_DATA) for
         # the empty-state counterpart of these shapes.
-        # --------------------------------------------------
 
         logger.info(
             "Session '%s': /analyze completed in %.1fs.",
@@ -1731,9 +1636,7 @@ def analyze(request: InvestigationRequest):
         )
 
 
-# --------------------------------------------------
 # Local Development
-# --------------------------------------------------
 
 if __name__ == "__main__":
 

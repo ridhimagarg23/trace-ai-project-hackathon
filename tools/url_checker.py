@@ -1,20 +1,4 @@
-"""
-url_checker.py
-==============
-Lightweight, offline URL inspection.
-
-Before the LLM is asked anything, each URL found in a message is run
-through this analyser to produce cheap structural signals:
-
-* Does it use HTTPS?              (phishing sites often run plain HTTP)
-* Is it a known link shortener?   (scammers hide real destinations)
-* How many subdomains does it have?  (deep fake domains like
-  ``login.secure.sbi-update.co.in`` are a phishing hallmark)
-
-The results feed both the RiskEngine and the InvestigationAgent's
-context. No network requests are made - everything is derived from
-the URL string itself.
-"""
+"""URL checker"""
 
 from urllib.parse import urlparse
 

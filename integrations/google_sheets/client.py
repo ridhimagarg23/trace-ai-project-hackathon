@@ -1,35 +1,4 @@
-"""
-Google Sheets integration client for SCAMNET.
-
-Role in SCAMNET
----------------
-Google Sheets is the **live evidence store**: every investigated case
-gets one row in a spreadsheet, updated as new IOCs are extracted, so an
-analyst (or a stakeholder) can watch an investigation accumulate
-evidence without touching the dashboard.
-
-Implemented flow (real Sheets API, no fakes)
---------------------------------------------
-* ``connect()``  - loads the server-side credentials JSON, mints an
-  OAuth access token and verifies the target spreadsheet with a real
-  read. When no spreadsheet id is configured, SCAMNET **creates** one
-  (that is itself an authorized, verifiable Sheets call) so the
-  evidence store always exists.
-* ``ensure_worksheet()`` - guarantees the evidence tab exists.
-* ``append_rows()`` / ``upsert_case()`` - write evidence rows
-  (``values.append`` / ``values.update``), de-duplicated per case id.
-* ``check_health()`` - cheap authorized spreadsheet read (TTL-cached).
-* ``disconnect()`` - drops the cached credentials/session state.
-
-Credentials
------------
-Point ``GOOGLE_SHEETS_CREDENTIALS_FILE`` (or the shared
-``GOOGLE_CREDENTIALS_FILE``) at a service-account JSON or an OAuth
-authorized-user JSON. For a service account, SHARE the spreadsheet
-with the service account's ``client_email`` (Editor) - otherwise
-connect honestly fails with a Google 404/403 instead of pretending
-to work.
-"""
+"""Google Sheets integration client for SCAMNET."""
 
 from typing import Any, Dict, List, Optional, Sequence
 from urllib.parse import quote
@@ -107,9 +76,7 @@ class GoogleSheetsIntegration(GoogleApiIntegration):
         # (a restart re-verifies or re-creates it).
         self._spreadsheet_id: Optional[str] = None
 
-    # ----------------------------------------------
     # Configuration helpers
-    # ----------------------------------------------
 
     @property
     def spreadsheet_id(self) -> Optional[str]:
@@ -135,9 +102,7 @@ class GoogleSheetsIntegration(GoogleApiIntegration):
         )
         return str(configured) if configured else DEFAULT_WORKSHEET
 
-    # ----------------------------------------------
     # Lifecycle
-    # ----------------------------------------------
 
     def verify_connection(self) -> Dict[str, Any]:
         """
@@ -226,9 +191,7 @@ class GoogleSheetsIntegration(GoogleApiIntegration):
             ),
         }
 
-    # ----------------------------------------------
     # Sheets operations
-    # ----------------------------------------------
 
     def _has_worksheet(self, payload: Dict[str, Any]) -> bool:
         """True when ``payload`` lists the evidence tab already."""

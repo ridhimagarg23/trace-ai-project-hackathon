@@ -1,18 +1,4 @@
-// Sidebar.jsx
-// ===========
-// Left navigation rail:
-//  * Logo + product name
-//  * "New Investigation" primary action
-//  * Nav links (Dashboard / History / Saved Cases / Reports /
-//    Connected Apps)
-//  * Footer with a safety shield card + dark-mode toggle
-//
-// History / Saved Cases are future features: clicking them bubbles
-// up through onShowNotImplemented (alert stub in page.jsx).
-// Connected Apps opens the SCAMNET IntegrationsModal (honest external
-// app connection status - Telegram / Google Sheets / Google Drive / Gmail).
-// -------------------------------------------------------------------
-
+// Sidebar
 import React from 'react';
 import { ShieldIcon } from './Icons';
 

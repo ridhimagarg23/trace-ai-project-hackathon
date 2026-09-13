@@ -1,18 +1,4 @@
-// integrations.js
-// ===============
-// API helpers for the SCAMNET "Connected Apps" (integrations) UI.
-//
-// SECURITY MODEL:
-//  * All requests go through lib/api.js - directly to the backend in
-//    local `run_all` runs, via the SAME-ORIGIN /backend-api/* proxy
-//    (next.config.mjs rewrites) when hosted. Either way the browser
-//    never sees credentials.
-//  * The backend only ever returns honest, secret-free status
-//    (integrations/base.py). The UI must never invent a "connected"
-//    state on its own: if the backend cannot be reached, the status
-//    is UNKNOWN - not connected, not disconnected.
-// -------------------------------------------------------------------
-
+// integrations helper
 import { apiUrl } from '@/lib/api';
 
 // Fixed card order + copy used when the backend is unreachable, so the
@@ -92,9 +78,7 @@ export async function disconnectIntegration(integrationId) {
   return { ok: response.ok, status: response.status, body };
 }
 
-// -------------------------------------------------------------------
 // Telegram reply loop (the bot's polling worker)
-// -------------------------------------------------------------------
 // A connected Telegram bot is only useful while its reply loop is
 // running, so the dashboard exposes the loop's honest state and lets an
 // operator start/stop it without reaching for curl.

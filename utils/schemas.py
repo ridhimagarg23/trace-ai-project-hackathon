@@ -1,20 +1,4 @@
-"""
-schemas.py
-==========
-Pydantic models (data contracts) shared across TraceAI.
-
-These schemas are the typed backbone of every agent exchange and
-give us three guarantees:
-
-1. **Agent outputs are validated** the moment an LLM response is
-   converted into a model (wrong types / missing fields fail fast).
-2. **Field ranges are enforced** (e.g. ``confidence`` must be 0-100).
-3. **Serialisation is free** - ``model_dump()`` turns an object into
-   the plain dict that ``MemoryManager`` persists or the API returns.
-
-The three agent result types mirror the three LLM agents:
-``InvestigationResult``, ``ConversationResult`` and ``ReportResult``.
-"""
+"""Pydantic schemas"""
 
 from pydantic import BaseModel, Field
 

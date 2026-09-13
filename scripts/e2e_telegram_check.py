@@ -1,41 +1,4 @@
-"""
-e2e_telegram_check.py
-=====================
-End-to-end proof that the Telegram loop really works: a message sent to
-the bot is investigated and answered by the persona, over real HTTP,
-with no mocking of the backend, the Telegram client, the worker or the
-agents.
-
-How it works
-------------
-The script starts three servers on localhost:
-
-1. **Fake Telegram Bot API** (``http.server``) - implements
-   ``getMe`` / ``deleteWebhook`` / ``setMyCommands`` / ``getUpdates`` /
-   ``sendMessage`` / ``sendChatAction`` exactly like Telegram does
-   (including the ``conflict`` 409 when a webhook is active), keeps an
-   update queue you can inject messages into and records every message
-   the bot sends.
-2. **Fake OpenAI-compatible gateway** - answers the investigation,
-   conversation and report prompts with valid JSON, so the real agents,
-   risk engine and adaptive persona engine all run.
-3. **The real backend** (uvicorn, in a thread) with
-   ``TELEGRAM_API_BASE`` pointed at (1) and ``OPENROUTER_BASE_URL``
-   pointed at (2).
-
-Then it drives the real HTTP API:
-
-    connect -> start worker -> inject inbound message -> wait for reply
-            -> second turn (objective ladder advances)
-            -> no duplicate replies
-            -> /start wake -> stop worker -> manual fetch mode
-
-Run it with the project virtualenv:
-
-    .venv/bin/python scripts/e2e_telegram_check.py
-
-Exit code 0 means every step passed. Nothing here touches the network.
-"""
+"""E2E Telegram check script"""
 
 from __future__ import annotations
 
@@ -59,9 +22,7 @@ from scripts.telegram_simulator import (      # noqa: E402
 
 CHAT_ID = 424242
 
-# ------------------------------------------------------------------
 # 3. Harness
-# ------------------------------------------------------------------
 
 def free_port() -> int:
     with socket.socket() as probe:
@@ -185,9 +146,7 @@ def main() -> int:
     print(f"fake Telegram on :{telegram_port} · fake LLM on :{llm_port} · backend on :{api_port}")
 
     try:
-        # ----------------------------------------------------------
         checker.section("1. Connect the bot (real getMe)")
-        # ----------------------------------------------------------
         response = call(api_port, "POST", "/api/integrations/telegram/connect")
         body = response.json()
 
@@ -218,9 +177,7 @@ def main() -> int:
             f"(worker={body.get('worker')})",
         )
 
-        # ----------------------------------------------------------
         checker.section("2. Health / status endpoints")
-        # ----------------------------------------------------------
         health = call(api_port, "GET", "/health").json()
         checker.check(health.get("status") == "healthy", "GET /health is healthy",
                       f"({health})")
@@ -233,9 +190,7 @@ def main() -> int:
         checker.check(status["delivery_mode"] == "push",
                       "delivery_mode reports 'push' while the loop runs")
 
-        # ----------------------------------------------------------
         checker.section("3. Start the polling worker")
-        # ----------------------------------------------------------
         started = call(api_port, "POST", "/api/telegram/conversation/start")
         checker.check(started.status_code == 200, "worker start returns 200")
         checker.check(started.json()["worker"]["running"] is True,
@@ -243,9 +198,7 @@ def main() -> int:
         checker.check(started.json()["status"] == "running",
                       "manual start is idempotent while the loop runs")
 
-        # ----------------------------------------------------------
         checker.section("4. The scammer messages the bot -> persona replies")
-        # ----------------------------------------------------------
         state.push_message("Dear SBI customer, your card is blocked. "
                            "Verify at http://sbi-secure-login.co.in")
 
@@ -272,9 +225,7 @@ def main() -> int:
                       "no duplicate reply on later polls",
                       f"(sent={len(state.sent)})")
 
-        # ----------------------------------------------------------
         checker.section("5. Second turn: state + objective ladder advance")
-        # ----------------------------------------------------------
         first_turn_status = call(
             api_port, "GET", "/api/telegram/conversation/status"
         ).json()
@@ -314,9 +265,7 @@ def main() -> int:
             "worker keeps polling between turns",
         )
 
-        # ----------------------------------------------------------
         checker.section("6. /start is answered without the LLM")
-        # ----------------------------------------------------------
         state.push_message("/start")
         sent = wait_for_reply(state, 3)
 
@@ -331,9 +280,7 @@ def main() -> int:
                 "/start does not spend an LLM call",
             )
 
-        # ----------------------------------------------------------
         checker.section("7. Wake endpoint (outbound path in isolation)")
-        # ----------------------------------------------------------
         wake = call(
             api_port, "POST", "/api/telegram/conversation/wake",
             json={"chat_id": CHAT_ID},
@@ -345,18 +292,14 @@ def main() -> int:
             "wake returns the Telegram message id",
         )
 
-        # ----------------------------------------------------------
         checker.section("8. Stop the worker (cooperative shutdown)")
-        # ----------------------------------------------------------
         stopped = call(api_port, "POST", "/api/telegram/conversation/stop")
         checker.check(stopped.status_code == 200, "stop returns 200")
         checker.check(stopped.json()["status"] == "stopped",
                       "worker reports stopped",
                       f"({stopped.json()})")
 
-        # ----------------------------------------------------------
         checker.section("9. Fetch mode (no background thread)")
-        # ----------------------------------------------------------
         state.push_message("Transfer the money to pay@okaxis now.")
 
         with state.lock:
@@ -381,9 +324,7 @@ def main() -> int:
                       "a second fetch does not re-answer old updates",
                       f"({again.json()})")
 
-        # ----------------------------------------------------------
         checker.section("10. Manual single-turn endpoint")
-        # ----------------------------------------------------------
         manual = call(
             api_port, "POST", "/api/telegram/conversation/message",
             json={"chat_id": CHAT_ID, "text": "Give me your bank details."},
@@ -396,9 +337,7 @@ def main() -> int:
             "manual turn returns the persona reply",
         )
 
-        # ----------------------------------------------------------
         checker.section("11. Guard rails")
-        # ----------------------------------------------------------
         bad = call(api_port, "POST", "/api/telegram/send-test",
                    json={"chat_id": 0, "text": "hi"})
         checker.check(bad.status_code == 422, "chat_id=0 is rejected with 422",
@@ -413,9 +352,7 @@ def main() -> int:
         checker.check(no_token.status_code == 404,
                       "unknown integration id returns 404")
 
-        # ----------------------------------------------------------
         checker.section("12. Disconnect stops the loop and boots cleanly")
-        # ----------------------------------------------------------
         disconnected = call(
             api_port, "POST", "/api/integrations/telegram/disconnect"
         )

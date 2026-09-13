@@ -1,65 +1,4 @@
-"""
-Telegram integration client for SCAMNET.
-
-Role in SCAMNET
----------------
-Telegram is the communication channel with the suspicious actor:
-receive their messages, send the undercover persona's replies, keep the
-conversation alive and eventually trigger the investigation agent on
-every turn.
-
-Implemented MVP (real Bot API, no AI wiring yet)
-------------------------------------------------
-This client now talks to the REAL Telegram Bot API over HTTPS:
-
-* ``verify_connection()`` - ``getMe``: proves the configured bot token
-  is valid and returns the bot's public identity.
-* ``connect()``           - verifies via ``getMe`` and marks the
-  integration as genuinely connected (``connected=True`` only after
-  Telegram itself accepted the credentials).
-* ``check_health()``      - TTL-cached ``getMe`` ping so status
-  endpoints stay honest without hammering the API.
-* ``get_updates()``       - long-polling ``getUpdates`` with an
-  in-memory acknowledgement cursor (``offset``), returning messages
-  normalized into ``IncomingMessage`` (see models.py). No public
-  webhook server is required.
-* ``send_message()``      - ``sendMessage`` to a specific chat_id
-  (with UTF-16-aware length checking, which is what Telegram actually
-  enforces - a 4096-emoji message is far beyond its byte budget).
-* ``send_chat_action()``  - ``sendChatAction`` (the "typing..." hint).
-* ``set_my_commands()``   - ``setMyCommands`` (declares /start in the
-  Telegram UI so an operator always has a way to ping the bot).
-* ``delete_webhook()``    - ``deleteWebhook``: a webhook configured by
-  anything else (BotFather, another deployment) makes ``getUpdates``
-  return 409 forever, which looks exactly like "the bot never replies".
-  ``connect()`` clears it, so polling always works.
-* ``disconnect()``        - drops the verified-session state (no
-  background loop or webhook is owned by this client).
-
-Deliberately NOT implemented yet (next increments):
-* no background polling loop / autonomous investigation orchestrator;
-* incoming messages are NOT routed to InvestigationAgent /
-  ConversationAgent / AdaptiveInvestigationEngine - this step only
-  proves reliable Telegram communication;
-* no webhook support; no media handling (text messages only).
-
-Security
---------
-The bot token lives ONLY in server-side configuration (``.env``) and
-is embedded solely in the Bot API request URL. It is never:
-* returned in any status payload or API response;
-* included in exception messages or log lines (network errors are
-  reduced to their exception TYPE name because httpx errors can carry
-  the request URL; every upstream-provided string additionally passes
-  through ``_redact()``);
-* persisted to any database or the frontend.
-
-Testing
--------
-The HTTP layer is injectable (``http_client`` constructor argument),
-so unit tests run fully offline against a stub - see
-tests/test_telegram_integration.py.
-"""
+"""Telegram integration client for SCAMNET."""
 
 import logging
 import time
@@ -80,9 +19,7 @@ from integrations.telegram.models import (
 logger = logging.getLogger("SCAMNET-Telegram")
 
 
-# --------------------------------------------------
 # Provider-specific failure type
-# --------------------------------------------------
 
 class TelegramAPIError(IntegrationConnectionError):
     """
@@ -107,9 +44,7 @@ class TelegramAPIError(IntegrationConnectionError):
         self.retry_after = retry_after
 
 
-# --------------------------------------------------
 # Client
-# --------------------------------------------------
 
 # Telegram allows 0-~50 s long-poll waits; 25 s is a safe default.
 DEFAULT_LONG_POLL_TIMEOUT = 25
@@ -234,9 +169,7 @@ class TelegramIntegration(BaseIntegration):
         # one-time "I am alive" greeting instead of a fresh case.
         self.last_poll_had_pending: bool = False
 
-    # ----------------------------------------------
     # HTTP plumbing (token-safe)
-    # ----------------------------------------------
 
     def _get_http_client(self):
         """Lazily create the shared httpx.Client (or use the stub)."""
@@ -361,9 +294,7 @@ class TelegramIntegration(BaseIntegration):
 
         return body.get("result")
 
-    # ----------------------------------------------
     # Input validation helpers
-    # ----------------------------------------------
 
     @staticmethod
     def _validate_chat_id(chat_id: Any) -> int:
@@ -380,9 +311,7 @@ class TelegramIntegration(BaseIntegration):
             raise ValueError("chat_id cannot be 0.")
         return chat_id
 
-    # ----------------------------------------------
     # Bot API operations
-    # ----------------------------------------------
 
     def verify_connection(self) -> Dict[str, Any]:
         """
@@ -652,9 +581,7 @@ class TelegramIntegration(BaseIntegration):
 
         return bool(result) if isinstance(result, bool) else True
 
-    # ----------------------------------------------
     # Lifecycle (BaseIntegration contract)
-    # ----------------------------------------------
 
     def connect(self) -> None:
         """
@@ -682,9 +609,7 @@ class TelegramIntegration(BaseIntegration):
             self._last_error = str(exc)
             raise
 
-        # ----------------------------------------------------------
         # Clear any webhook BEFORE declaring the connection usable.
-        # ----------------------------------------------------------
         # A webhook and getUpdates are mutually exclusive: while one is
         # registered, Telegram answers every getUpdates call with HTTP
         # 409 and the bot never sees a message - the classic "the bot
@@ -706,9 +631,7 @@ class TelegramIntegration(BaseIntegration):
             logger.warning("Telegram deleteWebhook failed: %s", exc)
             raise TelegramAPIError(self._last_error) from None
 
-        # ----------------------------------------------------------
         # Publish the command menu (best effort).
-        # ----------------------------------------------------------
         # "start" gives the operator a guaranteed liveness probe: send
         # /start to the bot and it answers even when the LLM is down.
         try:
@@ -787,9 +710,7 @@ class TelegramIntegration(BaseIntegration):
         self._last_health_at = now
         return True
 
-    # ----------------------------------------------
     # Status enrichment
-    # ----------------------------------------------
 
     def get_connection_info(self) -> dict:
         """Public bot identity (never the token) for the status API."""

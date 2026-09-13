@@ -1,6 +1,6 @@
 # 🐞 TraceAI / SCAMNET — Code Audit & Bug Report
 
-**Date:** 2026-09-13 · **Scope:** whole repository (`ridhimagarg23/scamnet`, branch `arena/01a09c0f-scamnet`)
+**Date:** 2026-09-13 · **Scope:** whole repository (`ridhimagarg23/trace-ai-project-hackathon`, branch `main`)
 **How to reproduce:** `pip install -r requirements.txt`, then
 `OPENROUTER_API_KEY=test-key python -m unittest discover -s tests` (131 tests, all green after the fixes).
 

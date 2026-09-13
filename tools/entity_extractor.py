@@ -1,34 +1,10 @@
-"""
-entity_extractor.py
-
-Deterministic extraction of Indicators of Compromise (IOCs)
-using regular expressions (NOT the LLM).
-
-Design rationale
-----------------
-* Regex extraction is fast, free and reproducible - it never costs a
-  token and never hallucinates.
-* The extracted candidates are handed to the LLM as supporting
-  evidence, which keeps model verdicts anchored to real artifacts
-  actually present in the message.
-
-Regional focus
---------------
-The extractor is tuned for the Indian threat landscape: it recognises
-+91 / 10-digit mobile numbers, UPI payment handles, rupee amounts and
-common Indian bank + wallet names (SBI, HDFC, Paytm, PhonePe ...).
-
-NOTE: keep the patterns in sync with the browser-side highlighter in
-frontend/lib/constants.js (highlightIOCs) used by the chat bubbles.
-"""
+"""Entity extractor - regex IOCs"""
 
 import re
 
 class EntityExtractor:
 
-    # -----------------------------
     # Patterns
-    # -----------------------------
     # Each pattern below targets the formats scammers embed in phishing
     # SMS / WhatsApp / email text. Compile-time safety: they are raw
     # strings, so every backslash reaches the regex engine untouched.
@@ -81,9 +57,7 @@ class EntityExtractor:
         r")\b"
     )
 
-    # -----------------------------
     # Extract
-    # -----------------------------
 
     @classmethod
     def extract(cls, text: str) -> dict:
@@ -103,9 +77,7 @@ class EntityExtractor:
             amounts, bank_names - each a sorted, de-duplicated list.
         """
 
-        # -----------------------------
         # URLs
-        # -----------------------------
 
         urls = []
 
@@ -128,9 +100,7 @@ class EntityExtractor:
 
             urls.append(url)
 
-        # -----------------------------
         # Standalone Domains
-        # -----------------------------
 
         for domain in re.findall(
             cls.DOMAIN_PATTERN,
@@ -144,9 +114,7 @@ class EntityExtractor:
             ):
                 urls.append(domain)
 
-        # -----------------------------
         # Remove emails before UPI search
-        # -----------------------------
         # Emails and UPI handles share the "x@y" shape, so matching on
         # the raw text would double-report addresses as UPI IDs. We
         # strip emails from a scratch copy and search UPI on that.
@@ -158,9 +126,7 @@ class EntityExtractor:
             flags=re.IGNORECASE
         )
 
-        # -----------------------------
         # Normalize (de-dupe + sort each IOC family)
-        # -----------------------------
 
         phones = sorted(
             set(
@@ -224,9 +190,7 @@ class EntityExtractor:
 
         urls = sorted(set(urls))
 
-        # -----------------------------
         # Return
-        # -----------------------------
 
         return {
 

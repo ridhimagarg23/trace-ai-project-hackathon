@@ -1,17 +1,4 @@
-"""
-test_agents_mocked.py
-=====================
-Offline unit tests for the three LLM agents.
-
-The LLM is replaced by a MagicMock (``patch`` on
-``llm.llm_client.LLMClient.generate``), so these tests exercise the
-agents' full plumbing - prompt construction, entity extraction,
-validation and risk scoring - without any network call or API key.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for agents mocked"""
 
 import unittest
 from unittest.mock import patch

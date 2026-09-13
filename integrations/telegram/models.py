@@ -1,30 +1,4 @@
-"""
-models.py
-=========
-Normalized message models for the Telegram channel.
-
-``IncomingMessage`` is the simple internal structure every inbound
-Telegram message is converted into:
-
-    {
-        "update_id":       int,
-        "chat_id":         int,
-        "message_id":      int,
-        "sender_id":       int | None,
-        "sender_username": str | None,
-        "text":            str,
-        "timestamp":       int | None   (Unix epoch seconds)
-    }
-
-It is deliberately independent from Telegram's raw Bot API update
-structure so the (future) SCAMNET investigation engine consumes one
-stable schema no matter which channel a message arrived on.
-
-``normalize_update()`` performs the conversion and safely skips
-anything that is not a plain inbound text message (channel posts,
-edits, photos, stickers, malformed payloads...) by returning None -
-normalization must never crash the polling loop.
-"""
+"""Telegram models"""
 
 from typing import Any, Optional
 

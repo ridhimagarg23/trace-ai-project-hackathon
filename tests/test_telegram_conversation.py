@@ -1,25 +1,4 @@
-"""
-test_telegram_conversation.py
-=============================
-Offline tests for the Phase 2A Telegram <-> ConversationAgent loop.
-
-Covers the four pieces that close the loop and the HTTP surface that
-drives them:
-
-* ``prompts/telegram_assistant_prompt.txt``   - the Telegram system rules
-* ``agents/conversation_agent.py``           - ``run_telegram()``
-* ``tools/conversation_service.py``          - per-chat conversation state
-* ``tools/telegram_conversation_worker.py``  - polling / delivery plumbing
-* ``backend/telegram_routes.py``             - /conversation/* endpoints
-
-Everything runs offline: the LLM is patched (or replaced by a stub
-agent), Telegram is replaced by a stub integration and the archive is
-a stub MemoryManager. No network call, no real token, no files written.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for telegram conversation"""
 
 import unittest
 from unittest.mock import patch
@@ -47,9 +26,7 @@ from utils.schemas import (
 )
 
 
-# --------------------------------------------------
 # Factories & stubs
-# --------------------------------------------------
 
 def make_investigation(**overrides) -> InvestigationResult:
     """A believable banking-phish verdict (fields overridable)."""
@@ -414,9 +391,7 @@ def build_service(
     return service, investigation_agent, conversation_agent, memory_manager
 
 
-# --------------------------------------------------
 # 1. The Telegram system prompt
-# --------------------------------------------------
 
 class TestTelegramAssistantPrompt(unittest.TestCase):
 
@@ -472,9 +447,7 @@ class TestTelegramAssistantPrompt(unittest.TestCase):
         )
 
 
-# --------------------------------------------------
 # 2. ConversationAgent Telegram mode
-# --------------------------------------------------
 
 class TestConversationAgentTelegramMode(unittest.TestCase):
 
@@ -626,9 +599,7 @@ class TestConversationAgentTelegramMode(unittest.TestCase):
                 )
 
 
-# --------------------------------------------------
 # 3. Conversation service (per-chat loop)
-# --------------------------------------------------
 
 class TestConversationService(unittest.TestCase):
 
@@ -836,9 +807,7 @@ class TestConversationService(unittest.TestCase):
         self.assertFalse(service.reset(42))
 
 
-# --------------------------------------------------
 # 4. Background worker
-# --------------------------------------------------
 
 class TestConversationWorker(unittest.TestCase):
 
@@ -990,9 +959,7 @@ class TestConversationWorker(unittest.TestCase):
         self.assertGreater(stats["polls"], 0)
 
 
-# --------------------------------------------------
 # 5. HTTP endpoints
-# --------------------------------------------------
 
 class TestTelegramConversationEndpoints(unittest.TestCase):
 

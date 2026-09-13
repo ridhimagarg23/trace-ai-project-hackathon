@@ -1,21 +1,4 @@
-"""
-memory_manager.py
-=================
-JSON-file persistence for finished scam investigations.
-
-Every /analyze turn appends the full ``InvestigationResult`` of the
-current case to ``database/threat_memory.json`` (git-ignored). This
-builds a small, human-readable threat-intel archive that can be
-searched later by threat type.
-
-Why a JSON file instead of a database?
-* Zero external infrastructure - works on free-tier hosts (Render /
-  Railway) that only offer an ephemeral or read-only filesystem.
-* Easy to inspect, grep and export for analysts.
-
-NOTE: on ephemeral platforms the file resets on redeploy - treat it
-as per-run memory, not a durable long-term store.
-"""
+"""Memory manager - JSON store"""
 
 import json
 import logging

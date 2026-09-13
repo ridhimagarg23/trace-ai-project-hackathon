@@ -1,25 +1,10 @@
-// api.js
-// ======
-// Single place that decides where the browser sends API calls.
-//
-// Two modes, one helper (`apiUrl()`), used by every call site:
-//
-// * DIRECT (local `run_all` runs): `NEXT_PUBLIC_API_URL` points the
-//   browser straight at FastAPI. This is the default locally because
-//   POST /analyze runs three sequential LLM calls (~35-50 s on a slow
-//   model) while the Next.js dev rewrite proxy drops proxied requests
-//   after ~30 s ("Failed to proxy ... socket hang up", ECONNRESET) -
-//   the backend keeps working, but the dashboard sees a 500. Browser
-//   fetch has no such ceiling. run_all.py also pre-fills the backend's
-//   CORS_ALLOW_ORIGINS, so no manual CORS setup is needed.
-// * PROXY (hosted/Vercel): without NEXT_PUBLIC_API_URL the browser
+// API helper
 //   stays same-origin (`/backend-api/...`), which next.config.mjs
 //   forwards to the FastAPI backend - no CORS needed at all.
 //
 // Override with NEXT_PUBLIC_API_URL for any deployment where the
 // browser should call the backend directly. The backend's
 // CORS_ALLOW_ORIGINS must then include this frontend's origin.
-// -------------------------------------------------------------------
 
 /** Prefix of the same-origin proxy defined in next.config.mjs. */
 export const BACKEND_PROXY_PREFIX = '/backend-api';

@@ -1,47 +1,4 @@
-"""
-llm_client.py
-=============
-Reusable multi-provider LLM client.
-
-Every agent in this project (Investigation / Conversation / Report)
-performs its AI inference through THIS single class. Centralising the
-LLM plumbing here gives us:
-
-* One place to configure the providers (OpenRouter + NVIDIA NIM).
-* Automatic JSON parsing / cleanup for structured agent output.
-* A fixed, predictable request flow so one slow/dead/rate-limited
-  model never fails the whole investigation::
-
-      1. OpenRouter (the model configured via ``LLM_MODEL``)
-      2. no answer within ``OPENROUTER_DEADLINE`` (15 s by default)?
-         -> NVIDIA NIM: nvidia/nemotron-3-ultra-550b-a55b
-      3. Ultra failed too?
-         -> NVIDIA NIM: nvidia/nemotron-3.5-lightning-30b-a3b
-
-  The OpenRouter call is abandoned (not retried) once its deadline is
-  gone, so the analyst never waits on a slow gateway.
-
-Supported features
-------------------
-- OpenRouter (OpenAI-compatible API)
-- NVIDIA NIM (OpenAI-compatible API, https://build.nvidia.com)
-- Per-request provider/model override + runtime-active selection
-- JSON output mode (``json_output=True``)
-- Markdown-fence stripping (`````json ... `````)
-- Automatic retries with exponential backoff (per model)
-- Automatic model + cross-provider fallback (no code changes needed
-  when a model is retired - the next spare answers instead)
-
-Example
--------
->>> client = LLMClient()  # uses the runtime-active provider/model
->>> data = client.generate("Return {\\"ok\\": true}", json_output=True)
->>> data
-{'ok': True}
->>> fast = LLMClient(provider="nvidia")  # lightning-fast replies
->>> fast.generate("Say hi!")
-'...'
-"""
+"""LLM client - OpenRouter + NVIDIA"""
 
 from __future__ import annotations
 
@@ -256,9 +213,7 @@ class LLMClient:
         self.fallbacks_used: list = []
         self.last_error: Exception | None = None
 
-    # ----------------------------------------------------------
     # Provider plumbing
-    # ----------------------------------------------------------
 
     def _client_for(self, provider: str) -> OpenAI:
         """Return (building + caching) the SDK client for a provider."""
@@ -359,9 +314,7 @@ class LLMClient:
 
         return chain
 
-    # ----------------------------------------------------------
     # Generation with retries + fallback
-    # ----------------------------------------------------------
 
     def generate(
         self,

@@ -1,18 +1,4 @@
-// page.jsx
-// =========
-// Root dashboard page ("use client" = client-side React).
-//
-// Responsibilities:
-//  * Session lifecycle - generate / reset the session_id and keep a
-//    session timer running.
-//  * State hub - owns the full dashboard payload (persona, chat,
-//    investigation, report) and distributes it to the panels.
-//  * API client - calls POST /analyze and POST /new on the backend,
-//    and merges the response into the dashboard state.
-//  * Cross-cutting UI - dark mode, thinking animation, error toast,
-//    report modal + the various "not implemented" stub actions.
-// -------------------------------------------------------------------
-
+// TraceAI dashboard
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -120,9 +106,7 @@ export default function DashboardPage() {
     }
   }, [errorMessage]);
 
-  // ---------------------------------------------------------------
   // Core action: send one scammer message to POST /analyze
-  // ---------------------------------------------------------------
   const handleSendMessage = async (message) => {
     if (!message || isLoading) return;
 
@@ -187,9 +171,7 @@ export default function DashboardPage() {
     }
   };
 
-  // ---------------------------------------------------------------
   // Reset: clear backend session + regenerate the local state
-  // ---------------------------------------------------------------
   const handleNewInvestigation = async () => {
     setIsLoading(true);
     try {

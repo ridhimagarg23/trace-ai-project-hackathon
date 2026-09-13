@@ -1,115 +1,4 @@
-"""
-config.py
-==========
-Central configuration for TraceAI.
-
-This module loads runtime settings from environment variables
-(via a local ``.env`` file if one exists) and exposes them through
-a single ``settings`` object that every other module imports.
-
-Recommended environment variables
----------------------------------
-* ``OPENROUTER_API_KEY``  - Your OpenRouter API key (https://openrouter.ai/keys).
-* ``NVIDIA_NIM_API_KEY``  - Your NVIDIA NIM API key (https://build.nvidia.com).
-                            At least ONE of the two LLM keys must be set -
-                            without any key the server still BOOTS (the
-                            dashboard, ``GET /health`` and the integration
-                            status/connect endpoints keep working), but
-                            ``POST /analyze`` answers HTTP 503
-                            "llm_not_configured" and ``GET /health``
-                            reports "degraded".
-
-Optional environment variables
-------------------------------
-* ``LLM_PROVIDER``        - Active LLM provider: ``openrouter`` (default)
-                            or ``nvidia`` (NVIDIA NIM - the fastest option).
-                            When unset, the server auto-selects: OpenRouter
-                            if its key exists, else NVIDIA NIM. The request
-                            flow is fixed (OpenRouter first, NVIDIA as the
-                            fallback stage), so this only matters when
-                            OpenRouter is not configured at all.
-* ``LLM_MODEL``           - OpenRouter model id used when the active
-                            provider is OpenRouter. Defaults to
-                            ``qwen/qwen3-32b``.
-* ``NVIDIA_NIM_MODEL``    - NVIDIA NIM model id used when the active
-                            provider is NVIDIA. Defaults to
-                            ``nvidia/nemotron-3-ultra-550b-a55b``.
-* ``OPENROUTER_DEADLINE`` - Seconds the OpenRouter call may take before it
-                            is abandoned and the NVIDIA stage starts
-                            (default ``15``). ``LLM_PRIMARY_DEADLINE`` is a
-                            synonym; ``0`` disables the deadline.
-* ``OPENROUTER_BASE_URL`` - OpenAI-compatible gateway root for OpenRouter.
-                            Defaults to ``https://openrouter.ai/api/v1``.
-* ``NVIDIA_NIM_BASE_URL`` - NVIDIA NIM gateway root. Defaults to
-                            ``https://integrate.api.nvidia.com/v1``.
-* ``OPENROUTER_FALLBACK_MODELS`` / ``NVIDIA_NIM_FALLBACK_MODELS``
-                          - Comma-separated model ids tried IN ORDER when
-                            the primary model fails (rate limit, timeout,
-                            bad output, unknown model...). ``LLM_FALLBACK_MODELS``
-                            is a shared shorthand applied to both providers
-                            when the provider-specific variable is empty.
-                            The NVIDIA stage always contains the two
-                            nemotron models (ultra then lightning) whatever
-                            these variables hold.
-* ``LLM_CROSS_PROVIDER_FALLBACK``
-                          - ``1`` (default) lets a failing provider fall
-                            back to the OTHER provider's models (when its
-                            key is configured); ``0`` disables that hop.
-* ``OPENROUTER_TIMEOUT`` / ``NVIDIA_NIM_TIMEOUT`` / ``LLM_TIMEOUT``
-                          - Per-request timeout in seconds (provider-specific
-                            wins, else the shared ``LLM_TIMEOUT``). Defaults:
-                            90 s for OpenRouter, 45 s for NVIDIA NIM so a
-                            slow call fails over to the next model quickly.
-* ``OPENROUTER_MODELS`` / ``NVIDIA_NIM_MODELS``
-                          - Comma-separated EXTRA model ids appended to the
-                            model catalog (for brand-new models that are
-                            not in the curated catalog yet).
-* ``CORS_ALLOW_ORIGINS``  - Comma-separated browser origins allowed to
-                            call the API cross-origin. Defaults to the
-                            local dev origins + the hosted dashboard.
-                            (The bundled Next.js dashboard proxies
-                            same-origin through ``/backend-api``, so it
-                            needs no CORS entry at all.)
-* ``GOOGLE_CREDENTIALS_FILE``
-                          - Shared Google credentials JSON used by
-                            Drive / Sheets / Gmail when their own
-                            provider-specific setting is empty.
-
-Optional SCAMNET integration variables (all default to unset; see
-``integrations/`` - missing values simply keep the corresponding
-external app in the honest "not_configured" state):
-
-* ``TELEGRAM_BOT_TOKEN``            - Telegram Bot API token (@BotFather).
-* ``TELEGRAM_API_BASE``             - Bot API root (default
-                                      ``https://api.telegram.org``).
-* ``GOOGLE_CREDENTIALS_FILE``       - Shared Google credentials JSON
-                                      (service account or authorized
-                                      user) used by every Google app.
-* ``GOOGLE_SHEETS_CREDENTIALS_FILE``- Server-side path to the Sheets
-                                      service-account / OAuth JSON key.
-* ``GOOGLE_SHEETS_SPREADSHEET_ID``  - Optional target spreadsheet id.
-* ``GOOGLE_SHEETS_WORKSHEET``       - Worksheet (tab) for evidence rows.
-* ``GOOGLE_DRIVE_CREDENTIALS_FILE`` - Server-side path to the Drive
-                                      service-account / OAuth JSON key.
-* ``GOOGLE_DRIVE_FOLDER_ID``        - Optional report destination folder.
-* ``GOOGLE_GMAIL_CREDENTIALS_FILE`` - Server-side path to the Gmail
-                                      authorized-user JSON key.
-
-Example
--------
-.. code-block:: bash
-
-    export OPENROUTER_API_KEY=sk-or-...
-    export NVIDIA_NIM_API_KEY=nvapi-...
-    export LLM_PROVIDER=nvidia
-    export NVIDIA_NIM_MODEL=meta/llama-3.1-8b-instruct
-
-Usage
------
->>> from config import settings
->>> settings.ACTIVE_PROVIDER
-'openrouter'
-"""
+"""Env config and settings"""
 
 import logging
 import os
@@ -121,9 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ----------------------------------------------------------------------
 # LLM provider identifiers
-# ----------------------------------------------------------------------
 # Canonical provider ids used everywhere (settings, LLMClient, API,
 # dashboard). Aliases such as "nim" / "nvidia-nim" are normalized to
 # "nvidia" so callers never have to guess the exact spelling.
@@ -148,9 +35,7 @@ DEFAULT_NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
 #: on - see ``PRIMARY_PROVIDER`` below).
 DEFAULT_OPENROUTER_MODEL = "qwen/qwen3-32b"
 
-# ----------------------------------------------------------------------
 # NVIDIA NIM fallback stage
-# ----------------------------------------------------------------------
 # The NVIDIA stage is deliberately tiny: exactly TWO models, tried in
 # this order. Nemotron 3 Ultra is the priority; Nemotron 3.5 Lightning
 # only answers when Ultra fails / is too slow.
@@ -322,17 +207,13 @@ class Settings:
 
     def __init__(self):
 
-        # ------------------------------------------------------
         # LLM credentials (at least ONE provider key is required
         # for the AI agents; both may be set for fallback)
-        # ------------------------------------------------------
 
         self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or None
         self.NVIDIA_NIM_API_KEY = os.getenv("NVIDIA_NIM_API_KEY") or None
 
-        # ------------------------------------------------------
         # Gateway roots (OpenAI-compatible on both providers)
-        # ------------------------------------------------------
 
         self.OPENROUTER_BASE_URL = os.getenv(
             "OPENROUTER_BASE_URL",
@@ -344,9 +225,7 @@ class Settings:
             DEFAULT_NVIDIA_BASE_URL,
         ).rstrip("/")
 
-        # ------------------------------------------------------
         # Default primary models per provider
-        # ------------------------------------------------------
         # OpenRouter slugs look like "provider/model-name" while NIM
         # ids look like "org/model-name" - both are plain strings for
         # the OpenAI-compatible chat API.
@@ -361,9 +240,7 @@ class Settings:
             DEFAULT_NVIDIA_MODEL,
         ).strip() or DEFAULT_NVIDIA_MODEL
 
-        # ------------------------------------------------------
         # Fallback chains
-        # ------------------------------------------------------
         # OpenRouter: none by default (it hands over to NVIDIA after
         # its deadline). NVIDIA: always ultra -> lightning.
 
@@ -405,9 +282,7 @@ class Settings:
             "LLM_CROSS_PROVIDER_FALLBACK", True
         )
 
-        # ------------------------------------------------------
         # Per-request timeouts (fast fail-over keeps replies quick)
-        # ------------------------------------------------------
 
         generic_timeout = os.getenv("LLM_TIMEOUT", "").strip()
 
@@ -428,10 +303,8 @@ class Settings:
             generic_value or DEFAULT_NVIDIA_TIMEOUT,
         )
 
-        # ------------------------------------------------------
         # Soft deadlines (how long the PRIMARY provider may take
         # before the NVIDIA stage takes over)
-        # ------------------------------------------------------
         # The OpenRouter call is abandoned after this many seconds -
         # the analyst gets an answer from NVIDIA instead of staring
         # at a spinner. ``0`` disables the deadline for a provider.
@@ -447,9 +320,7 @@ class Settings:
         # by default (set NVIDIA_NIM_DEADLINE to bound it too).
         self.NVIDIA_NIM_DEADLINE = _env_float("NVIDIA_NIM_DEADLINE", 0.0)
 
-        # ------------------------------------------------------
         # Active provider + model (runtime-switchable selection)
-        # ------------------------------------------------------
 
         requested_provider = normalize_provider(os.getenv("LLM_PROVIDER", ""))
 
@@ -473,9 +344,7 @@ class Settings:
         self.ACTIVE_PROVIDER = active_provider
         self.ACTIVE_MODEL = self.get_default_model(active_provider)
 
-        # ------------------------------------------------------
         # SCAMNET external-app integrations (all OPTIONAL)
-        # ------------------------------------------------------
         # Read by the integration layer (integrations/) and surfaced
         # as honest status - never as values - by GET /api/integrations.
         # A missing variable simply keeps that integration in the
@@ -538,9 +407,7 @@ class Settings:
             "GOOGLE_GMAIL_CREDENTIALS_FILE"
         )
 
-        # ------------------------------------------------------
         # CORS (browser origins allowed to call the API directly)
-        # ------------------------------------------------------
         # The bundled dashboard talks to the backend SAME-ORIGIN
         # through the Next.js /backend-api proxy, so no CORS entry is
         # needed for it. Direct API consumers (custom dashboards, the
@@ -554,9 +421,7 @@ class Settings:
             if origin.strip()
         ] or list(self.DEFAULT_CORS_ORIGINS)
 
-        # ------------------------------------------------------
         # Validation
-        # ------------------------------------------------------
         # Missing LLM keys mean the AI agents cannot run, but that must
         # NOT take the whole server down: an operator verifying an
         # external-app setup (Telegram/Sheets/Drive/Gmail) needs /health
@@ -587,9 +452,7 @@ class Settings:
 
             logging.getLogger("TraceAI-Config").warning(message)
 
-    # ----------------------------------------------------------
     # LLM provider helpers
-    # ----------------------------------------------------------
 
     @staticmethod
     def is_known_provider(provider: str | None) -> bool:

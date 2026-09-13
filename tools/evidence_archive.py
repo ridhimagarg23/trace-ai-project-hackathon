@@ -1,38 +1,4 @@
-"""
-evidence_archive.py
-===================
-Best-effort export of a finished investigation turn into SCAMNET's
-connected Google apps:
-
-* **Google Drive**  - the markdown report is uploaded once and then
-  UPDATED on later turns, so a multi-turn case keeps exactly one
-  artefact (no duplicate files).
-* **Google Sheets** - the accumulated case facts are written as ONE row
-  per case (upserted by ``case_id``), so the evidence sheet stays a
-  clean, de-duplicated table.
-
-Design rules
-------------
-* **Never break an investigation.** Archiving is a side effect: every
-  failure is logged and swallowed, and the returned dict reports
-  ``skipped`` / ``failed`` honestly.
-* **Never fake a connection.** Archiving only happens when the
-  integration reports a genuine, health-verified session
-  (``is_connected()``); an unconfigured app is simply ``skipped``.
-* **No secrets.** Only report text and extracted IOCs are sent; tokens
-  live inside the integration clients.
-
-Usage
------
->>> archive = EvidenceArchiver()
->>> archive.export(
-...     case_id="session_ab12",
-...     investigation=investigation_result,
-...     report=report_result,
-...     drive_file_id=None,          # reused on later turns
-... )
-{'google_drive': {'status': 'uploaded', 'file_id': '...'}, ...}
-"""
+"""Evidence archive - Drive/Sheets"""
 
 import datetime
 import logging
@@ -60,9 +26,7 @@ class EvidenceArchiver:
         self._drive = drive
         self._sheets = sheets
 
-    # ----------------------------------------------
     # Collaborator resolution (lazy + injectable)
-    # ----------------------------------------------
 
     @property
     def drive(self):
@@ -86,9 +50,7 @@ class EvidenceArchiver:
 
         return self._sheets
 
-    # ----------------------------------------------
     # Public API
-    # ----------------------------------------------
 
     def export(
         self,
@@ -138,9 +100,7 @@ class EvidenceArchiver:
             ),
         }
 
-    # ----------------------------------------------
     # Per-app exporters (each one isolated)
-    # ----------------------------------------------
 
     def _export_drive(
         self,

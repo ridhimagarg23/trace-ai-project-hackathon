@@ -1,57 +1,4 @@
-"""
-google_api.py
-=============
-Shared Google API plumbing for SCAMNET's Google integrations
-(**Google Drive**, **Google Sheets** and **Gmail**).
-
-Why this module exists
-----------------------
-Drive, Sheets and Gmail all speak the same authentication protocol:
-an OAuth 2.0 access token is minted from a server-side credentials
-JSON file (service account or authorized user) and then attached as a
-``Authorization: Bearer ...`` header to plain REST calls. Implementing
-that three times would mean three subtly different auth implementations
-- so it lives here once, and the three clients in
-``integrations/google_drive``, ``integrations/google_sheets`` and
-``integrations/gmail`` only describe *what they do*, not *how they
-authenticate*.
-
-What the base class provides
-----------------------------
-* ``credentials_path()``     - resolve the credentials file (provider
-                               specific setting, falling back to the
-                               shared ``GOOGLE_CREDENTIALS_FILE``).
-* ``configuration_issues()`` - honest validity checks (file exists,
-                               readable, parseable JSON, supported
-                               credential type) with secret-free and
-                               path-free messages.
-* ``_api_request()``         - authorized REST call with sanitised
-                               error handling.
-* ``connect()`` / ``disconnect()`` / ``check_health()`` - the real
-                               lifecycle: ``connect()`` only succeeds
-                               after the provider's ``verify_connection()``
-                               made a genuine, authorized API call.
-* ``get_connection_info()``  - secret-free facts (account e-mail,
-                               spreadsheet id, ...) for the dashboard.
-
-Credentials supported
----------------------
-1. **Service account JSON** (``"type": "service_account"``) - the usual
-   server-to-server setup. Share the Drive folder / spreadsheet with the
-   service account's ``client_email``.
-2. **Authorized user JSON** (``"type": "authorized_user"``) - the OAuth
-   "refresh token" file produced by the OAuth consent flow. Required for
-   Gmail, which service accounts can only use with Workspace
-   domain-wide delegation.
-
-Honest-status rule (see integrations/base.py)
----------------------------------------------
-Nothing here fabricates a connection: a client is only marked connected
-after ``verify_connection()`` received a real ``2xx`` from Google with
-the expected payload. A failure is recorded as a sanitised
-``GoogleAPIError`` (HTTP 401/403, network errors, ...) and reported as
-``connection_failed`` (HTTP 502) by the API layer.
-"""
+"""Google API shared helpers"""
 
 from __future__ import annotations
 
@@ -73,9 +20,7 @@ from integrations.base import (
 logger = logging.getLogger("SCAMNET-Integrations-Google")
 
 
-# --------------------------------------------------
 # Tunables
-# --------------------------------------------------
 
 # check_health() reuses a recent successful verification for this long,
 # so the dashboard's status polling does not hit the Google API on
@@ -273,9 +218,7 @@ class GoogleApiIntegration(BaseIntegration):
         self._last_health_at: Optional[float] = None
         self._last_health_ok: Optional[bool] = None
 
-    # ----------------------------------------------
     # HTTP plumbing
-    # ----------------------------------------------
 
     def _get_http_client(self):
         """Lazily create the shared httpx.Client (or return the stub)."""
@@ -284,9 +227,7 @@ class GoogleApiIntegration(BaseIntegration):
             self._http_client = httpx.Client()
         return self._http_client
 
-    # ----------------------------------------------
     # Configuration
-    # ----------------------------------------------
 
     def credentials_path(self) -> Optional[str]:
         """
@@ -387,9 +328,7 @@ class GoogleApiIntegration(BaseIntegration):
         problem = self._credential_file_problem()
         return [problem] if problem else []
 
-    # ----------------------------------------------
     # Credentials / authorization
-    # ----------------------------------------------
 
     def _load_credentials_info(self) -> Dict[str, Any]:
         """Read + parse the credentials file, or raise honestly."""
@@ -569,9 +508,7 @@ class GoogleApiIntegration(BaseIntegration):
         headers["Authorization"] = f"Bearer {self._access_token()}"
         return headers
 
-    # ----------------------------------------------
     # REST helper
-    # ----------------------------------------------
 
     def _api_request(
         self,
@@ -666,9 +603,7 @@ class GoogleApiIntegration(BaseIntegration):
 
         return message
 
-    # ----------------------------------------------
     # Lifecycle (BaseIntegration contract)
-    # ----------------------------------------------
 
     def verify_connection(self) -> Dict[str, Any]:
         """
@@ -788,9 +723,7 @@ class GoogleApiIntegration(BaseIntegration):
         self._last_health_at = now
         return True
 
-    # ----------------------------------------------
     # Status enrichment
-    # ----------------------------------------------
 
     def get_connection_info(self) -> dict:
         """Secret-free facts about the live Google session."""

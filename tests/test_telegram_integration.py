@@ -1,25 +1,4 @@
-"""
-test_telegram_integration.py
-============================
-Offline unit tests for the REAL Telegram Bot API client
-(integrations/telegram/) and its backend test endpoints
-(backend/telegram_routes.py).
-
-Every HTTP call is stubbed via the injectable ``http_client`` - these
-tests NEVER contact Telegram. They pin:
-
-* valid Telegram configuration handling (connect via getMe);
-* Telegram API + network error handling (sanitised, no token leaks);
-* incoming message normalization (raw update -> IncomingMessage);
-* send_message / get_updates request construction (URL, JSON payload,
-  long-poll timeouts, offset acknowledgement);
-* honest endpoint behaviour (409 not_configured / not_connected,
-  502 telegram_error, 422 validation, 200 only on real success).
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for telegram integration"""
 
 import time
 import unittest
@@ -41,9 +20,7 @@ from integrations.telegram import (
 FAKE_TOKEN = "123456:TEST-FAKE-TOKEN-do-not-leak"
 
 
-# --------------------------------------------------
 # Stubs
-# --------------------------------------------------
 
 def make_settings(token=FAKE_TOKEN, api_base="https://api.telegram.org"):
     """Minimal settings stub (mirrors the Telegram keys of config.Settings)."""
@@ -171,9 +148,7 @@ def make_connected_integration(*extra):
     return integration, stub
 
 
-# --------------------------------------------------
 # 1. Configuration + verify_connection (getMe)
-# --------------------------------------------------
 
 class TestTelegramConfiguration(unittest.TestCase):
 
@@ -259,9 +234,7 @@ class TestTelegramConfiguration(unittest.TestCase):
         self.assertNotIn(FAKE_TOKEN, str(ctx.exception))
 
 
-# --------------------------------------------------
 # 2. connect / disconnect / health
-# --------------------------------------------------
 
 class TestTelegramLifecycle(unittest.TestCase):
 
@@ -357,9 +330,7 @@ class TestTelegramLifecycle(unittest.TestCase):
         self.assertEqual(len(stub.calls), 4)
 
 
-# --------------------------------------------------
 # 3. Message normalization
-# --------------------------------------------------
 
 class TestMessageNormalization(unittest.TestCase):
 
@@ -443,9 +414,7 @@ class TestMessageNormalization(unittest.TestCase):
         self.assertEqual(normalized.chat_id, -100123)
 
 
-# --------------------------------------------------
 # 4. get_updates (long polling + offset cursor)
-# --------------------------------------------------
 
 class TestGetUpdates(unittest.TestCase):
 
@@ -551,9 +520,7 @@ class TestGetUpdates(unittest.TestCase):
         self.assertNotIn(FAKE_TOKEN, str(ctx.exception))
 
 
-# --------------------------------------------------
 # 5. send_message
-# --------------------------------------------------
 
 class TestSendMessage(unittest.TestCase):
 
@@ -639,9 +606,7 @@ class TestSendMessage(unittest.TestCase):
             integration.send_message(12345, "hello")
 
 
-# --------------------------------------------------
 # 6. Backend endpoints (TestClient, still fully mocked HTTP)
-# --------------------------------------------------
 
 class TestTelegramEndpoints(unittest.TestCase):
     """
