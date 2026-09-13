@@ -1,0 +1,25 @@
+{
+  "_help": "EXTRA LLM models. Entries can be plain ids (\"org/model-id\") or objects with id/label/description/speed. This file EXTENDS the built-in catalog in llm/model_catalog.py - it is safe to leave entries here forever. Unknown shapes never crash the server (they are ignored with a log line). A {\"models\": {...}} wrapper is also accepted. NOTE: the NVIDIA fallback stage always runs nvidia/nemotron-3-ultra-550b-a55b first and nvidia/nemotron-3.5-lightning-30b-a3b second (config.py -> NVIDIA_STAGE_MODELS); this list only adds labels/extras for the API.",
+  "nvidia": [
+    {
+      "id": "nvidia/nemotron-3-ultra-550b-a55b",
+      "label": "Nemotron 3 Ultra 550B",
+      "description": "Priority NVIDIA fallback (build.nvidia.com). Frontier reasoning, 262k context.",
+      "speed": "powerful"
+    },
+    {
+      "id": "nvidia/nemotron-3.5-lightning-30b-a3b",
+      "label": "Nemotron 3.5 Lightning 30B",
+      "description": "Second NVIDIA fallback - only used when Ultra fails or times out.",
+      "speed": "lightning"
+    }
+  ],
+  "openrouter": [
+    {
+      "id": "qwen/qwen3-32b",
+      "label": "Qwen3 32B",
+      "description": "Default OpenRouter model. Strong structured output.",
+      "speed": "balanced"
+    }
+  ]
+}
