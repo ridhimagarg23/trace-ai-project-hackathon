@@ -1,0 +1,26 @@
+# Virtual Environment & Env Vars
+venv/
+.venv/
+.env
+
+# Python Caches & Compiled files
+**/__pycache__/
+*.pyc
+.pytest_cache/
+
+# Local DB & Session States
+database/threat_memory.json
+
+# Integration credentials & tokens (NEVER commit real secrets)
+credentials/
+*service_account*.json
+*service-account*.json
+*token*.json
+
+# Local Logs
+logs/
+*.log
+
+# OS Metadata
+.DS_Store
+Thumbs.db
