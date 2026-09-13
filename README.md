@@ -4,9 +4,34 @@
 
 ---
 
+## 🎬 Demo Video
+
+> 📹 **Live demo walkthrough** — see TraceAI catch a scammer in action.
+>
+> [▶️ Watch the Demo Video](*add-your-demo-video-link-here*)
+
+---
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="images-writeup/dashboard-ss.jpg" alt="TraceAI Dashboard - Active Undercover Investigation" width="900"/>
+  <br/>
+  <em>Main dashboard — live undercover session with persona, chat, risk score and IOC tracker.</em>
+</p>
+
+<p align="center">
+  <img src="images-writeup/report-dashboard-ss.jpg" alt="TraceAI Investigation Report Preview" width="700"/>
+  <br/>
+  <em>Investigation Report Preview — downloadable Markdown intelligence report.</em>
+</p>
+
+---
+
 ## 📖 Table of Contents
 - [What is TraceAI?](#-what-is-traceai)
 - [Key Features](#-key-features)
+- [Screenshots](#-screenshots)
 - [Architecture](#-architecture)
 - [How an Investigation Works (request flow)](#-how-an-investigation-works)
 - [Repository Layout](#-repository-layout)
@@ -23,6 +48,18 @@
 ## 🔍 What is TraceAI?
 
 Investigating scams is hard because scammers vanish the moment they smell a trap. TraceAI puts an **AI-driven proxy in the communication path**:
+
+### Why TraceAI?
+
+Traditional scam-detection systems stop at block & alert. They never engage, never investigate and never collect intelligence — so scammers simply move on to the next target.
+
+<p align="center">
+  <img src="images-writeup/traditional-systems.png" alt="Traditional Scam Detection Workflow and its limitations" width="900"/>
+  <br/>
+  <em>Traditional scam-detection workflow: detect → warn → block → stop. No investigation, no evidence, no intelligence.</em>
+</p>
+
+TraceAI flips the script: instead of just blocking a suspicious message, it **actively engages the scammer with an undercover persona**, safely collecting IOCs and actionable intelligence while the analyst stays protected.
 
 1. An analyst pastes a scammer's real message (SMS / WhatsApp / email).
 2. TraceAI classifies the threat and creates a **believable decoy victim persona** matched to the scam type (a worried SBI customer, a job-hunting graduate, a wealthy retiree…).
@@ -49,11 +86,27 @@ The analyst stays completely safe: no real personal data is ever used, and the L
 | **Live Telegram Engagement** | The undercover persona answers real Telegram messages (long-polling worker) |
 | **Evidence Archive** | Finished reports are pushed to Google Drive and case rows upserted into Google Sheets |
 
+### Decoy Personas
+
+TraceAI maintains a roster of realistic undercover personas matched to different threat contexts — each with a distinct age range, communication style and engagement strategy:
+
+<p align="center">
+  <img src="images-writeup/traceai-personas.jpg" alt="TraceAI Decoy Personas" width="900"/>
+  <br/>
+  <em>Friendly undercover personas: Student, Recent Graduate, Job Seeker, Working Professional, Freelancer, Entrepreneur, Retiree, Part-time Worker.</em>
+</p>
+
 ---
 
 ## 🏗️ Architecture
 
 TraceAI is a **lightweight FastAPI backend + responsive Next.js dashboard**. The backend orchestrates **4 AI agents** plus deterministic tooling:
+
+<p align="center">
+  <img src="images-writeup/system-architecture-image.png" alt="TraceAI System Architecture" width="950"/>
+  <br/>
+  <em>TraceAI system architecture: User Input → Frontend → Backend API → Multi-Agent System → External Services → Output & Actionable Intelligence.</em>
+</p>
 
 ```mermaid
 graph TD
@@ -86,6 +139,12 @@ graph TD
 | **Conversation Agent** | `agents/conversation_agent.py` | Writes the persona's next believable reply (< 35 words, safe by prompt rules) |
 | **Report Agent** | `agents/report_agent.py` | Compiles all case facts into a professional markdown report |
 
+<p align="center">
+  <img src="images-writeup/multi-agent-architecture.png" alt="TraceAI Agents - The Smart Team Behind Every Scam Investigation" width="950"/>
+  <br/>
+  <em>The TraceAI agent team: Investigation, Risk Engine, Adaptive Investigation Engine, Conversation, Report, Evidence Collection, Threat Intelligence, Memory &amp; Context, and Persona Generation agents.</em>
+</p>
+
 ### Deterministic support tools (no LLM, no cost)
 
 | Tool | Purpose |
@@ -101,7 +160,13 @@ graph TD
 
 ## 🔄 How an Investigation Works
 
-Every `POST /analyze` call runs this pipeline:
+Every `POST /analyze` call runs this pipeline — from raw suspicion to actionable intelligence:
+
+<p align="center">
+  <img src="images-writeup/wokflow-image.png" alt="TraceAI Workflow - From Suspicion to Actionable Intelligence" width="950"/>
+  <br/>
+  <em>End-to-end TraceAI investigation workflow: Input → Investigation &amp; Context Extraction → Risk Analysis → Persona Generation → Engage Scammer → Evidence Collection → Continuous Adaptation → Report Generation.</em>
+</p>
 
 ```mermaid
 sequenceDiagram
@@ -354,13 +419,17 @@ Open the dashboard, click the **paste-template** icon (or type a scam SMS such a
 *"Dear SBI customer, your card is blocked. Verify at http://sbi-secure-login.co.in"*)
 and press **Send**.
 
+<p align="center">
+  <img src="images-writeup/dashboard-ss.jpg" alt="TraceAI Dashboard" width="900"/>
+  <br/>
+  <em>The dashboard during an active undercover investigation — persona panel, live chat, risk score and IOC tracker.</em>
+</p>
+
 With `TELEGRAM_BOT_TOKEN` set, the bot connects **and starts replying on boot** -
 check **Connected Apps → Telegram** in the dashboard (the card shows the loop
 running, with Start/Stop and a "send test hello" box), or message the bot from
 Telegram: `/start` gets an instant greeting, any other message gets investigated
 and answered by the persona.
-
-Open the dashboard, click the **paste-template** icon (or type a scam SMS such as *"Dear SBI customer, your card is blocked. Verify at http://sbi-secure-login.co.in"*) and press **Send**.
 
 > ℹ️ The dashboard talks to the backend **same-origin** through the Next.js
 > `/backend-api` proxy, so it works on localhost, on Vercel and behind any reverse
@@ -585,11 +654,6 @@ when the Telegram loop answers `/start` but fails every other message.
 👉 [`docs/interactive-guide.html`](docs/interactive-guide.html)
 
 *(Open it directly in any browser — no build step, no internet required.)*
-
----
-
-Made with 🛡️ for scam research and threat intelligence.
-in any browser — no build step, no internet required.)*
 
 ---
 
