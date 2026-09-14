@@ -1,16 +1,4 @@
-// Avatar.jsx
-// ===========
-// Renders one round avatar in four modes:
-//
-//  * isScammer -> static scammer PNG (/assets/avatar_scammer.png)
-//  * isMascot  -> inline SVG shield-mascot (used in the top bar)
-//  * persona   -> occupation-matched avatar PNG selected by
-//                 getPersonaRoleKey() (professional, retiree, ...)
-//  * fallback  -> same PNG path as persona with "student" default
-//
-// PNG assets live in frontend/public/assets/avatar_<role>.png
-// -------------------------------------------------------------------
-
+// Avatar component
 import React from 'react';
 import { getPersonaRoleKey } from '@/lib/constants';
 

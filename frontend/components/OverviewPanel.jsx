@@ -1,16 +1,4 @@
-// OverviewPanel.jsx
-// ==================
-// Right panel: real-time investigation readouts.
-//
-//  * Threat level badge + animated risk-score gauge (SVG ring)
-//  * Confidence score bar
-//  * 5-step investigation progress stepper
-//  * Evidence tracker (IOCs collected per family)
-//  * Recent activity timeline
-//
-// Data source: dashboardData.investigation (backend POST /analyze).
-// -------------------------------------------------------------------
-
+// Overview panel
 import React, { useState, useEffect } from 'react';
 import { CheckIcon, SearchIcon, LockIcon, ChevronIcon, DynamicEvidenceIcon } from './Icons';
 import { cap } from '@/lib/constants';
@@ -30,10 +18,8 @@ export default function OverviewPanel({
     activity = []
   } = investigation;
 
-  // ---------------------------------------------------------------
   // Animated risk-score counter: counts up/down to the target value
   // with an adaptive tick rate (snappier for big jumps).
-  // ---------------------------------------------------------------
   const [displayScore, setDisplayScore] = useState(0);
 
   useEffect(() => {
@@ -86,10 +72,8 @@ export default function OverviewPanel({
   if (threatSeverity?.toLowerCase() === 'critical') sevClass = 'badge-critical';
   else if (threatSeverity?.toLowerCase() === 'high') sevClass = 'badge-warning';
 
-  // ---------------------------------------------------------------
   // Gauge math: SVG circle radius 15.9 -> circumference ~99.9 units.
   // strokeDasharray shows the filled arc proportional to the score.
-  // ---------------------------------------------------------------
   const circumference = 2 * Math.PI * 15.9; // ~99.9
   const filled = (displayScore / 100) * circumference;
   const strokeDash = `${filled.toFixed(1)} ${(circumference - filled).toFixed(1)}`;

@@ -1,36 +1,4 @@
-"""
-conversation_service.py
-=======================
-Headless Telegram <-> ConversationAgent conversational loop.
-
-This module is the Phase 2A bridge: it turns a raw Telegram message
-into an undercover persona reply by running the SAME pipeline the
-dashboard's ``POST /analyze`` uses, but with no HTTP request/response
-involved and with one independent state machine per Telegram chat.
-
-One turn (``TelegramConversationService.handle_message``) runs:
-
-    inbound Telegram text
-        -> InvestigationAgent          (IOC regex + URL checks + LLM
-                                        verdict + deterministic risk)
-        -> merge into the chat's accumulated case facts
-        -> AdaptiveInvestigationEngine (persona profile + objective
-                                        ladder, advanced every turn)
-        -> ConversationAgent.run_telegram()  (persona's next reply,
-                                        driven by the Telegram prompt)
-        -> MemoryManager               (archive case facts to JSON)
-
-Why a separate service instead of reusing /analyze?
-* ``/analyze`` is request-scoped and UI-shaped (progress steps,
-  timeline, persona card). The Telegram loop needs neither.
-* Telegram needs ONE state machine PER CHAT (keyed by chat_id),
-  not per analyst session.
-* Keeping the loop here makes it callable from a background worker,
-  from an HTTP endpoint or from a unit test without FastAPI.
-
-State is in-memory only (like the rest of the project): a process
-restart starts every chat fresh.
-"""
+"""Conversation service"""
 
 import logging
 from dataclasses import dataclass, field
@@ -52,9 +20,7 @@ from utils.schemas import InvestigationResult
 logger = logging.getLogger("SCAMNET-ConversationService")
 
 
-# ----------------------------------------------------------
 # Bot commands (handled WITHOUT the LLM)
-# ----------------------------------------------------------
 # ``/start`` is what Telegram itself sends when a chat opens a bot for
 # the first time, and it is the one message an operator can always send
 # to check that the loop is alive. It must therefore never depend on
@@ -158,9 +124,7 @@ def merge_investigations(
 
         setattr(existing, attribute, merged)
 
-    # ----------------------------------------------------------
     # Recalculate risk with everything collected so far.
-    # ----------------------------------------------------------
 
     entities = {
         "phone_numbers": existing.phone_numbers,
@@ -269,9 +233,7 @@ class TelegramConversationService:
         # chat_id -> TelegramChatState
         self.chats: Dict[int, TelegramChatState] = {}
 
-    # ----------------------------------------------------------
     # Lazily-built collaborators
-    # ----------------------------------------------------------
     # Deferred so constructing the service never requires an API key
     # or touches the filesystem - only actually handling a message
     # does.
@@ -300,9 +262,7 @@ class TelegramConversationService:
             self._memory_manager = MemoryManager()
         return self._memory_manager
 
-    # ----------------------------------------------------------
     # Main loop
-    # ----------------------------------------------------------
 
     def handle_message(
         self,
@@ -350,9 +310,7 @@ class TelegramConversationService:
 
         state = self._get_or_create_state(chat_id)
 
-        # ------------------------------------------------------
         # 1. Investigate the inbound message
-        # ------------------------------------------------------
 
         fresh = self.investigation_agent.run(text)
 
@@ -378,9 +336,7 @@ class TelegramConversationService:
 
         investigation = state.investigation
 
-        # ------------------------------------------------------
         # 2. Record the inbound turn, then generate the reply
-        # ------------------------------------------------------
         # The scammer line is appended BEFORE generating so the
         # transcript handed to the LLM already contains the message
         # being answered (same ordering as POST /analyze).
@@ -417,9 +373,7 @@ class TelegramConversationService:
         state.last_objective = engine_state.current_objective
         state.last_strategy = engine_state.current_strategy
 
-        # ------------------------------------------------------
         # 3. Archive (best effort - never breaks the conversation)
-        # ------------------------------------------------------
 
         if self.archive:
 
@@ -459,9 +413,7 @@ class TelegramConversationService:
             "message": text,
         }
 
-    # ----------------------------------------------------------
     # State access
-    # ----------------------------------------------------------
 
     def handle_start(
         self,
@@ -600,9 +552,7 @@ class TelegramConversationService:
         self.chats.clear()
 
 
-# ----------------------------------------------------------
 # Process-wide default service
-# ----------------------------------------------------------
 # The worker and the HTTP endpoints share ONE service instance so a
 # chat's state survives across polls and requests.
 

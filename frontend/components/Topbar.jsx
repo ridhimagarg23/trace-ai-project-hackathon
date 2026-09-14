@@ -1,12 +1,4 @@
-// Topbar.jsx
-// ===========
-// Session header bar shown above the 3-panel content row:
-//  * Left: "session alert" status text (danger banner look)
-//  * Middle: Change Persona / End Investigation actions
-//  * Right: protected-session badge + live timer, "Generate Report"
-//    button and the user avatar mascot
-// -------------------------------------------------------------------
-
+// Topbar
 import React from 'react';
 import { ShieldIcon } from './Icons';
 import Avatar from './Avatar';

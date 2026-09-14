@@ -1,21 +1,4 @@
-"""
-test_config_and_resilience.py
-=============================
-Regression tests for the configuration/robustness fixes:
-
-* a missing ``OPENROUTER_API_KEY`` no longer kills the whole server -
-  ``GET /health`` reports ``degraded`` and ``POST /analyze`` answers an
-  explicit HTTP 503 while the integration endpoints keep working;
-* ``TRACEAI_STRICT_CONFIG=1`` restores the fail-fast behaviour;
-* ``PromptLoader`` resolves ``prompts/`` relative to the repository
-  root, so the agents work when uvicorn/CLI is started from another
-  working directory;
-* CORS origins come from configuration.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for config and resilience"""
 
 import importlib
 import os

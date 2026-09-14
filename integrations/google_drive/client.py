@@ -1,33 +1,4 @@
-"""
-Google Drive integration client for SCAMNET.
-
-Role in SCAMNET
----------------
-Google Drive is the **report archive**: every investigation report can be
-pushed to a Drive folder as a markdown file, and the dashboard surfaces
-the created file id / shareable link so an analyst can open the evidence
-directly.
-
-Implemented flow (real Drive API, no fakes)
--------------------------------------------
-* ``connect()``  - loads the server-side credentials JSON, mints an
-  OAuth access token and calls ``about.get`` (optionally also verifying
-  the configured destination folder) before marking the integration
-  connected. Nothing is marked connected unless Google answered.
-* ``check_health()`` - cheap authorized ``about.get`` ping (TTL-cached).
-* ``upload_report()`` - creates the report file (``uploadType=multipart``)
-  or updates the same file on later turns (``uploadType=media``), so a
-  multi-turn case keeps exactly one Drive artefact.
-* ``disconnect()`` - drops the cached credentials/session state.
-
-Credentials
------------
-Point ``GOOGLE_DRIVE_CREDENTIALS_FILE`` (or the shared
-``GOOGLE_CREDENTIALS_FILE``) at a service-account JSON or an OAuth
-authorized-user JSON. For a service account, share the destination
-folder with the service account's ``client_email`` and set
-``GOOGLE_DRIVE_FOLDER_ID`` to that folder's id.
-"""
+"""Google Drive integration client for SCAMNET."""
 
 import re
 from typing import Any, Dict, Optional
@@ -75,9 +46,7 @@ class GoogleDriveIntegration(GoogleApiIntegration):
         "service account's client_email."
     )
 
-    # ----------------------------------------------
     # Configuration helpers
-    # ----------------------------------------------
 
     @property
     def folder_id(self) -> Optional[str]:
@@ -86,9 +55,7 @@ class GoogleDriveIntegration(GoogleApiIntegration):
         value = getattr(self.settings, "GOOGLE_DRIVE_FOLDER_ID", None)
         return str(value) if value else None
 
-    # ----------------------------------------------
     # Lifecycle
-    # ----------------------------------------------
 
     def verify_connection(self) -> Dict[str, Any]:
         """
@@ -149,9 +116,7 @@ class GoogleDriveIntegration(GoogleApiIntegration):
 
         return info
 
-    # ----------------------------------------------
     # Drive operations
-    # ----------------------------------------------
 
     def upload_report(
         self,
@@ -282,9 +247,7 @@ class GoogleDriveIntegration(GoogleApiIntegration):
 
         return True
 
-    # ----------------------------------------------
     # Helpers
-    # ----------------------------------------------
 
     @staticmethod
     def _file_name(title: str) -> str:

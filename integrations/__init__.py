@@ -1,28 +1,4 @@
-"""
-integrations
-============
-SCAMNET external-app integration layer.
-
-One shared client instance per provider is registered here at import
-time, bound to the server-side ``config.settings`` singleton (the same
-configuration pattern the rest of the project uses). The API
-(``backend/api.py``) and any future orchestrator talk to integrations
-ONLY through this registry - never by instantiating clients ad hoc.
-
-Registered providers
---------------------
-* ``telegram``      - communication & intelligence gathering
-* ``google_sheets`` - live investigation evidence
-* ``google_drive``  - investigation reports
-* ``gmail``         - evidence inbox & report delivery
-
-Honest-status guarantee
------------------------
-Every status produced by this layer reflects the REAL server-side
-configuration and authentication state (see base.py). No integration
-reports ``connected=True`` unless a genuine handshake succeeded, and
-no secret value ever appears in a status payload.
-"""
+"""integrations"""
 
 from typing import Dict, Optional
 
@@ -41,9 +17,7 @@ from .google_drive import GoogleDriveIntegration
 from .gmail import GmailIntegration
 
 
-# --------------------------------------------------
 # Registry (single shared instance per provider)
-# --------------------------------------------------
 
 REGISTRY: Dict[str, BaseIntegration] = {}
 
@@ -65,9 +39,7 @@ _register(GoogleDriveIntegration(settings))
 _register(GmailIntegration(settings))
 
 
-# --------------------------------------------------
 # Registry access helpers (used by backend/api.py)
-# --------------------------------------------------
 
 def get_integration(integration_id: str) -> Optional[BaseIntegration]:
     """Return the registered client for ``integration_id`` or None."""

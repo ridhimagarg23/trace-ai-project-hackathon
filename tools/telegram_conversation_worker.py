@@ -1,52 +1,4 @@
-"""
-telegram_conversation_worker.py
-===============================
-Background worker that turns Telegram into a live conversation channel.
-
-Phase 2A closes the loop end-to-end:
-
-    Telegram update (long poll)
-        -> TelegramConversationService.handle_message()
-             (InvestigationAgent -> Adaptive engine -> ConversationAgent)
-        -> TelegramIntegration.send_message(chat_id, persona reply)
-
-The worker owns ONLY the plumbing (polling, threading, error isolation);
-all conversation intelligence lives in ``tools/conversation_service.py``
-so it can be unit-tested without threads or Telegram.
-
-Design rules
-------------
-* **Never die on one bad message.** A failing investigation, a failing
-  LLM call or a failing send is recorded and the loop continues -
-  a stuck worker would silently end the undercover operation.
-* **Never send an empty reply.** Blank/whitespace inbound messages,
-  empty model output and over-long model output are handled without
-  breaking the chat (over-long replies are truncated on a UTF-16
-  boundary, which is the unit Telegram actually enforces).
-* **Always answer a wake-up.** ``/start`` - the message Telegram sends
-  when a chat first opens a bot, and the one ping an operator can
-  always send - is answered with a fixed greeting that needs NO LLM.
-  A backlog of pending updates is acknowledged the same way, so a bot
-  started after downtime never replies with a stale persona line.
-* **Give up loudly on dead credentials.** Repeated 401/403 answers
-  stop the loop and record why, instead of hammering Telegram forever.
-* **Stop cooperatively.** ``stop()`` signals an event; the loop checks
-  it between polls and before every send, so shutdown is prompt even
-  during a long poll.
-* **No secrets.** The worker only ever handles normalized messages and
-  reply text - the bot token stays inside the Telegram client.
-
-Two ways to run it
-------------------
-1. **Background polling worker** (default, ``start()``/``stop()``):
-   a daemon thread long-polls Telegram. Fastest replies, but some
-   hosts suspend the process between HTTP requests.
-2. **Fetch mode** (``run_once()``, exposed by
-   ``POST /api/telegram/conversation/fetch``): the scheduler/cron calls
-   the endpoint; each call polls once, answers everything that arrived
-   and returns the outcome. Works everywhere, including hosts that
-   cannot keep a thread alive.
-"""
+"""Telegram worker - polling loop"""
 
 import datetime
 import logging
@@ -204,9 +156,7 @@ class TelegramConversationWorker:
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
 
-    # ----------------------------------------------------------
     # Lifecycle
-    # ----------------------------------------------------------
 
     @staticmethod
     def _fetch_in_progress() -> bool:
@@ -399,9 +349,7 @@ class TelegramConversationWorker:
             if self._stop_event.wait(self.idle_sleep):
                 break
 
-    # ----------------------------------------------------------
     # Work
-    # ----------------------------------------------------------
 
     def run_once(self, should_abort: Optional[Callable[[], bool]] = None) -> int:
         """
@@ -602,9 +550,7 @@ class TelegramConversationWorker:
 
         return True
 
-    # ----------------------------------------------------------
     # Small helpers (each one fail-safe)
-    # ----------------------------------------------------------
 
     def _send_with_retry(self, chat_id: int, text: str):
         """
@@ -729,9 +675,7 @@ class TelegramConversationWorker:
         )
         return True
 
-    # ----------------------------------------------------------
     # Introspection
-    # ----------------------------------------------------------
 
     def stats(self) -> Dict[str, Any]:
         """
@@ -774,9 +718,7 @@ class TelegramConversationWorker:
         }
 
 
-# ----------------------------------------------------------
 # Helpers
-# ----------------------------------------------------------
 
 def _utc_now() -> str:
     """UTC timestamp (seconds resolution) for status/diagnostics."""
@@ -787,9 +729,7 @@ def _utc_now() -> str:
     )
 
 
-# ----------------------------------------------------------
 # Process-wide worker (shared by the HTTP endpoints)
-# ----------------------------------------------------------
 
 _WORKER: Optional[TelegramConversationWorker] = None
 
@@ -861,9 +801,7 @@ def reset_worker() -> None:
             _WORKER = None
 
 
-# ----------------------------------------------------------
 # Fetch mode (no long-lived thread required)
-# ----------------------------------------------------------
 # The polling thread above is the fastest way to answer messages, but
 # some hosts (serverless platforms, sleeping containers) freeze a
 # process between HTTP requests, so a background thread silently stops

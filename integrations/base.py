@@ -1,54 +1,4 @@
-"""
-base.py
-=======
-Integration abstractions for SCAMNET's external applications.
-
-SCAMNET is an autonomous scam-investigation agent that will (in later
-increments) talk to a suspicious actor over **Telegram**, keep live
-investigation evidence in **Google Sheets** and archive evidence-backed
-reports in **Google Drive**.
-
-This module defines the provider-agnostic contract those external apps
-must fulfil, so the core investigation code never depends on a specific
-vendor SDK:
-
-    BaseIntegration                    (abstract client contract)
-    IntegrationState                   (lifecycle enum)
-    IntegrationStatus                  (serialisable status payload)
-    IntegrationNotConfiguredError      (missing server-side credentials)
-    IntegrationNotImplementedError     (auth flow not built yet)
-    IntegrationConnectionError         (real upstream/API failure)
-
-Honest-status rule
-------------------
-An integration may only report ``connected=True`` after ``connect()``
-has completed a REAL authentication handshake with the external
-service AND ``check_health()`` verified the live session. Providers
-whose real auth flow is not built yet must raise
-``IntegrationNotImplementedError`` from ``connect()`` (surfaced by the
-API as HTTP 501); providers whose real attempt failed must raise
-``IntegrationConnectionError`` (HTTP 502). No client may fake success.
-
-Security rule
--------------
-Credentials live ONLY in server-side configuration (``config.settings``
-populated from the git-ignored ``.env``). ``IntegrationStatus`` payloads
-never contain secret *values* - only setting NAMES and human-readable
-state descriptions. Filesystem paths of credential files are also
-withheld from API responses.
-
-Adding a new integration
-------------------------
-1. Create ``integrations/<provider>/client.py`` with a concrete
-   subclass of ``BaseIntegration``.
-2. Declare ``id`` / ``name`` / ``purpose`` / ``required_settings`` /
-   ``setup_instructions``.
-3. Implement ``connect`` / ``disconnect`` / ``check_health`` against
-   the real service API (set ``self._connected = True`` only after a
-   verified handshake).
-4. Flip ``connect_implemented = True`` once the real flow works.
-5. Register the instance in ``integrations/__init__.py``.
-"""
+"""Integration base class"""
 
 from __future__ import annotations
 
@@ -62,9 +12,7 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger("SCAMNET-Integrations")
 
 
-# --------------------------------------------------
 # Lifecycle states
-# --------------------------------------------------
 
 class IntegrationState(str, Enum):
     """
@@ -82,9 +30,7 @@ class IntegrationState(str, Enum):
     ERROR = "error"
 
 
-# --------------------------------------------------
 # Honest failure types
-# --------------------------------------------------
 
 class IntegrationNotConfiguredError(RuntimeError):
     """
@@ -115,9 +61,7 @@ class IntegrationConnectionError(RuntimeError):
 
 
 
-# --------------------------------------------------
 # Status payload (what GET /api/integrations returns)
-# --------------------------------------------------
 
 class IntegrationStatus(BaseModel):
     """
@@ -164,9 +108,7 @@ class IntegrationStatus(BaseModel):
     connection_info: dict = Field(default_factory=dict)
 
 
-# --------------------------------------------------
 # Abstract client contract
-# --------------------------------------------------
 
 class BaseIntegration(ABC):
     """
@@ -222,9 +164,7 @@ class BaseIntegration(ABC):
         self._connected: bool = False
         self._last_error: Optional[str] = None
 
-    # ----------------------------------------------
     # Configuration checks
-    # ----------------------------------------------
 
     def missing_settings(self) -> List[str]:
         """Names of required settings that are absent or empty."""
@@ -251,9 +191,7 @@ class BaseIntegration(ABC):
 
         return not self.missing_settings() and not self.configuration_issues()
 
-    # ----------------------------------------------
     # Lifecycle (providers implement real behaviour)
-    # ----------------------------------------------
 
     @abstractmethod
     def connect(self) -> None:
@@ -306,9 +244,7 @@ class BaseIntegration(ABC):
             self._last_error = "Health check failed (see server logs)."
             return False
 
-    # ----------------------------------------------
     # Status reporting
-    # ----------------------------------------------
 
     def get_connection_info(self) -> dict:
         """

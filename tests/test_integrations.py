@@ -1,21 +1,4 @@
-"""
-test_integrations.py
-====================
-Offline unit tests for the SCAMNET integration layer (integrations/).
-
-No network access and no credentials are needed: these tests pin the
-HONEST-STATUS contract of the integration foundation -
-
-* unconfigured integrations report connected=False / available=False;
-* connect() never fakes success (raises NotConfigured / NotImplemented);
-* status payloads never leak secret values or credential file paths;
-* the API endpoint functions map those failures to honest HTTP codes
-  (404 / 409 / 501) instead of a fake 200.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for integrations"""
 
 import unittest
 from types import SimpleNamespace

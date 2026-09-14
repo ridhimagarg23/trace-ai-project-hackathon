@@ -1,24 +1,4 @@
-"""
-adaptive_investigation_engine.py
-================================
-Adaptive Investigation Engine - the "strategy brain" of TraceAI.
-
-The engine owns everything that makes the undercover persona feel
-*alive* across a multi-turn dialogue:
-
-1. **Profile selection** - picks a believable victim archetype
-   (communication style, language, digital literacy) matching the
-   detected threat context (banking scam vs job scam vs investment).
-2. **Objective ladder** - plans a progression of safe investigation
-   goals (collect the verification URL -> collect employee ID ->
-   collect payment method -> ... waste the scammer's time).
-3. **Strategy mapping** - translates each objective into a persona
-   behaviour ("Curious", "Confused", "Cooperative", ...) that the
-   ConversationAgent must adopt while replying.
-
-The engine is deliberately rule-based and deterministic (no LLM),
-so an entire investigation can be simulated in unit tests.
-"""
+"""Adaptive engine - persona & objectives"""
 
 from dataclasses import dataclass, field
 
@@ -79,9 +59,7 @@ class AdaptiveInvestigationEngine:
 
         self.state = None
 
-    # ------------------------------------
     # Public lifecycle API
-    # ------------------------------------
 
     def initialize(
         self,
@@ -166,9 +144,7 @@ class AdaptiveInvestigationEngine:
 
         return self.state
 
-    # ====================================
     # PRIVATE METHODS (selection rules)
-    # ====================================
 
     def _select_profile(
         self,
@@ -219,7 +195,6 @@ class AdaptiveInvestigationEngine:
             digital_literacy="Low"
         )
 
-    # ------------------------------------
 
     def _first_objective(
         self,
@@ -249,7 +224,6 @@ class AdaptiveInvestigationEngine:
         # Generic fallback: keep the scammer talking.
         return "Collect more information"
 
-    # ------------------------------------
 
     def _next_objective(self) -> str:
         """
@@ -287,7 +261,6 @@ class AdaptiveInvestigationEngine:
         # Ladder exhausted - never loop, always end.
         return "End investigation"
 
-    # ------------------------------------
 
     def _choose_strategy(
         self,

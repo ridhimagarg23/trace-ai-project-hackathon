@@ -1,33 +1,4 @@
-"""
-test_google_integrations.py
-===========================
-Offline unit tests for the Google integrations (Google Drive, Google
-Sheets, Gmail) and the evidence archiver.
-
-No network access and no real Google account is needed. Every test
-injects a stub HTTP client, so the *complete* flow runs:
-
-    credentials JSON -> OAuth token refresh -> authorized API call
-    -> connect()/check_health() -> Drive upload / Sheets upsert / Gmail send
-
-What is pinned here
--------------------
-* ``connect()`` only reports ``connected=True`` after a real authorized
-  API call succeeded (the honest-status contract of integrations/base.py).
-* Google failures (401/403/404, network error, non-JSON body) surface as
-  sanitised ``GoogleAPIError`` messages - never a token, never the
-  credentials-file path.
-* A credentials file that is missing / not JSON / the wrong type keeps
-  the integration ``not_configured`` (HTTP 409 on the API), never
-  "connected".
-* Drive uploads UPDATE the same file on later turns; Sheets upserts ONE
-  row per case id; the archiver skips disconnected apps and swallows
-  failures.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for google integrations"""
 
 import json
 import tempfile
@@ -54,9 +25,7 @@ FAKE_REFRESH_TOKEN = "1//FAKE-REFRESH-do-not-leak"
 FAKE_CLIENT_SECRET = "GOCSPX-FAKE-client-secret-do-not-leak"
 
 
-# --------------------------------------------------
 # Stubs
-# --------------------------------------------------
 
 class StubResponse:
     """Mimics the parts of httpx.Response the Google clients use."""
@@ -172,9 +141,7 @@ def drive_about_response(email="scamnet@project.iam.gserviceaccount.com"):
     })
 
 
-# --------------------------------------------------
 # Google Drive
-# --------------------------------------------------
 
 class TestGoogleDrive(unittest.TestCase):
 
@@ -404,9 +371,7 @@ class TestGoogleDrive(unittest.TestCase):
         self.assertEqual(integration.get_connection_info(), {})
 
 
-# --------------------------------------------------
 # Google Sheets
-# --------------------------------------------------
 
 class TestGoogleSheets(unittest.TestCase):
 
@@ -589,9 +554,7 @@ class TestGoogleSheets(unittest.TestCase):
         self.assertEqual(row[9], "http://evil.co")
 
 
-# --------------------------------------------------
 # Gmail
-# --------------------------------------------------
 
 class TestGmail(unittest.TestCase):
 
@@ -678,9 +641,7 @@ class TestGmail(unittest.TestCase):
             integration.list_messages(max_results=True)
 
 
-# --------------------------------------------------
 # Credentials handling
-# --------------------------------------------------
 
 class TestGoogleCredentials(unittest.TestCase):
 
@@ -758,9 +719,7 @@ class TestGoogleCredentials(unittest.TestCase):
         self.assertIn("[REDACTED]", redacted)
 
 
-# --------------------------------------------------
 # API endpoints (called directly, no HTTP server)
-# --------------------------------------------------
 
 class TestGoogleEndpoints(unittest.TestCase):
     """
@@ -819,9 +778,7 @@ class TestGoogleEndpoints(unittest.TestCase):
         self.assertFalse(payload["gmail"]["connected"])
 
 
-# --------------------------------------------------
 # Evidence archiver
-# --------------------------------------------------
 
 class StubIntegration:
     """Minimal connected/unconnected integration for archiver tests."""

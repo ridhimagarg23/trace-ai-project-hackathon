@@ -1,15 +1,4 @@
-"""
-test_adaptive_investigation_engine.py
-=====================================
-Offline unit tests for the deterministic Adaptive Investigation
-Engine (persona profile selection + objective-ladder progression).
-
-No mocks and no network: the engine is pure rule-based logic.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for adaptive investigation engine"""
 
 import unittest
 from tools.adaptive_investigation_engine import AdaptiveInvestigationEngine, InvestigationState

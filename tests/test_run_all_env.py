@@ -1,21 +1,4 @@
-"""
-test_run_all_env.py
-===================
-Offline unit tests for the run_all launcher's child-process environment.
-
-Covers ``build_child_env()`` (scripts/run_all.py):
-
-* direct browser -> backend mode by default (``NEXT_PUBLIC_API_URL``) -
-  the fix for the Next.js dev proxy's ~30 s ceiling, which drops slow
-  ``/analyze`` turns with ``Failed to proxy ... socket hang up``;
-* the ``--use-proxy`` opt-out, which restores the old proxied behaviour;
-* the automatic ``CORS_ALLOW_ORIGINS`` pre-fill (localhost, 127.0.0.1
-  and the LAN IP on the actual frontend port).
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for run all env"""
 
 import importlib.util
 import os

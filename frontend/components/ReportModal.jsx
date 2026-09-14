@@ -1,14 +1,4 @@
-// ReportModal.jsx
-// ===============
-// Modal dialog that previews the markdown investigation report and
-// lets the analyst download it as a .md file.
-//
-// The report object comes from the backend response:
-//   { title: string, markdown: string }
-// markdown is rendered with the "marked" library; download builds a
-// Blob client-side (no server round-trip needed).
-// -------------------------------------------------------------------
-
+// Report modal
 import React from 'react';
 import { marked } from 'marked';
 

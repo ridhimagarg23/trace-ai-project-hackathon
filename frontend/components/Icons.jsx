@@ -1,17 +1,4 @@
-// Icons.jsx
-// =========
-// Lightweight inline-SVG icon set (Feather-style stroke icons).
-//
-// Every icon is a small React component accepting standard SVG props
-// (width/height/style/strokeWidth/...), so callers can size/colour
-// them inline:
-//
-//     <CheckIcon style={{ width: 12, height: 12 }} />
-//
-// Keeping icons as inline SVGs avoids an icon-font/CDN dependency
-// and lets CSS variables colour them (currentColor).
-// -------------------------------------------------------------------
-
+// Icons
 import React from 'react';
 
 export function GlobeIcon(props) {

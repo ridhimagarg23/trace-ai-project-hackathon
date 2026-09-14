@@ -1,24 +1,8 @@
-"""
-streamlit_app.py
-================
-Static Streamlit mock-up of the TraceAI dashboard.
-
-NOTE: this is a UI PROTOTYPE / wireframe, not the live application.
-It renders a fixed example scenario (banking phishing, HIGH risk) and
-only echoes typed messages into the chat column - it does NOT call
-the agents or the API.
-
-The production UI is the Next.js dashboard in ``frontend/`` wired to
-``backend/api.py``. Run this file only for quick layout previews:
-
-    streamlit run streamlit_app.py
-"""
+"""Streamlit demo app"""
 
 import streamlit as st
 
-# -------------------------
 # Page Config
-# -------------------------
 
 st.set_page_config(
     page_title="TraceAI",
@@ -26,18 +10,14 @@ st.set_page_config(
     layout="wide"
 )
 
-# -------------------------
 # Session State
-# -------------------------
 # Streamlit reruns the script on every interaction; st.session_state
 # is the only place chat lines survive between reruns.
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# -------------------------
 # Sidebar
-# -------------------------
 
 with st.sidebar:
 
@@ -68,17 +48,13 @@ with st.sidebar:
         use_container_width=True
     )
 
-# -------------------------
 # Main Layout (3 columns: persona | chat | overview)
-# -------------------------
 
 left, center, right = st.columns(
     [1.1, 3, 1.3]
 )
 
-# =========================
 # LEFT - Active persona card
-# =========================
 
 with left:
 
@@ -96,9 +72,7 @@ with left:
 """
     )
 
-# =========================
 # CENTER - Chat column
-# =========================
 
 with center:
 
@@ -137,9 +111,7 @@ with center:
 
         st.rerun()
 
-# =========================
 # RIGHT - Static overview (fixed demo values)
-# =========================
 
 with right:
 

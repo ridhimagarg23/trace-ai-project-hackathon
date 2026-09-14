@@ -1,15 +1,4 @@
-// PersonaPanel.jsx
-// =================
-// Left panel: the undercover persona "identity card".
-//
-// Before the first /analyze response the panel shows a skeleton
-// ("Waiting for Persona"); afterwards it renders the cover identity
-// chosen by the backend (name, occupation, confidence, traits grid,
-// AI strategy tip) with a matching avatar.
-//
-// Data source: dashboardData.persona (backend get_persona_profile).
-// -------------------------------------------------------------------
-
+// Persona panel
 import React from 'react';
 import Avatar from './Avatar';
 import { DynamicTraitIcon } from './Icons';

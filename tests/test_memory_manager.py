@@ -1,15 +1,4 @@
-"""
-test_memory_manager.py
-======================
-Offline unit tests for the JSON persistence layer.
-
-The test redirects MemoryManager to a temp file so the repository's
-real ``database/threat_memory.json`` is never touched.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for memory manager"""
 
 import unittest
 from pathlib import Path

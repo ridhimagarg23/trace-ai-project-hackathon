@@ -1,12 +1,12 @@
-# 🛡️ TraceAI — Undercover Scam Investigation Dashboard
+# TraceAI — Undercover Scam Investigation Dashboard
 
-> **TraceAI** is an AI-driven scam-investigation platform: an **automated undercover agent** talks to online scammers, extracts **Indicators of Compromise (IOCs)**, scores risk and compiles detailed incident reports for security analysts. It plugs into the analyst's real tooling over **Telegram, Google Drive, Google Sheets and Gmail**.
+> TraceAI is a scam-investigation platform built for security analysts. An automated undercover agent talks to scammers, extracts Indicators of Compromise (IOCs), scores risk and compiles incident reports. Integrates with Telegram, Google Drive, Google Sheets and Gmail.
 
-**[▶️ Demo Video](https://drive.google.com/file/d/1CWYwcdJQEFpLaNut0e8zCkA_l4iSFGwN/view?usp=drivesdk)** · **[🧭 Interactive Developer Guide](docs/interactive-guide.html)** · **[📚 Full Docs & Deep Dive](docs/DEEP_DIVE.md)**
+**[Demo Video](https://drive.google.com/file/d/1CWYwcdJQEFpLaNut0e8zCkA_l4iSFGwN/view?usp=drivesdk)** · **[Interactive Developer Guide](docs/interactive-guide.html)** · **[Full Docs](docs/DEEP_DIVE.md)**
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
 <p align="center">
   <img src="images-writeup/dashboard-ss.jpg" alt="TraceAI Dashboard - Active Undercover Investigation" width="900"/>
@@ -22,7 +22,7 @@
 
 ---
 
-## 🔍 What is TraceAI?
+## What is TraceAI?
 
 Traditional scam detection stops at block & alert. TraceAI flips the script: it **actively engages the scammer with an undercover persona** and collects intelligence while the analyst stays protected.
 
@@ -37,7 +37,7 @@ No real personal data is ever used, and the LLM is explicitly instructed to neve
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Dynamic identity generation** — realistic decoy personas shaped from the detected threat context
 - **Undercover engagement** — objective-ladder conversations that safely extract scam credentials and details
@@ -50,7 +50,7 @@ No real personal data is ever used, and the LLM is explicitly instructed to neve
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 **Lightweight FastAPI backend + responsive Next.js dashboard**, orchestrating 4 AI agents plus deterministic tooling and a best-effort archiving layer.
 
@@ -71,7 +71,7 @@ Deterministic helpers (no LLM, no cost): regex entity extractor, URL checker, we
 
 ---
 
-## 🔄 How an Investigation Works
+## How an Investigation Works
 
 Every `POST /analyze` turn runs: **IOC extraction → URL analysis → LLM verdict → risk score → persona reply → memory save → report generation → Drive/Sheets archive**. Sessions are stateful (`session_id`), so a multi-turn undercover chat accumulates evidence across requests.
 
@@ -81,7 +81,7 @@ Every `POST /analyze` turn runs: **IOC extraction → URL analysis → LLM verdi
 
 ---
 
-## 📱 Telegram Bot — Live Honeypot Inbox
+## Telegram Bot — Live Honeypot Inbox
 
 Our Telegram bot puts the undercover persona in front of real scammers: inbound messages are investigated and answered automatically, while evidence flows into the same Drive/Sheets pipeline as the dashboard.
 
@@ -97,7 +97,7 @@ Two delivery modes: **push** (background long-polling thread, default — best o
 
 ---
 
-## 🔌 Connected Apps — Drive · Sheets · Gmail · Telegram
+## Connected Apps — Drive, Sheets, Gmail, Telegram
 
 All four integrations follow the same honest-status contract: `connected` only after a real authenticated handshake, and secrets never leave the server.
 
@@ -112,7 +112,7 @@ All four integrations follow the same honest-status contract: `connected` only a
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 **Prerequisites:** Python 3.10+, Node 18+ (dashboard), Git.
 
@@ -139,7 +139,7 @@ Without an LLM key the server still boots (`/health` reports `degraded`, `/analy
 
 ---
 
-## 🔑 Environment Variables
+## Environment Variables
 
 Template at `.env.example` (repo root, git-ignored).
 
@@ -151,11 +151,11 @@ Template at `.env.example` (repo root, git-ignored).
 | `GOOGLE_CREDENTIALS_FILE` | Shared credentials JSON for Drive / Sheets / Gmail |
 | `GOOGLE_DRIVE_FOLDER_ID` · `GOOGLE_SHEETS_SPREADSHEET_ID` | Optional destinations (Sheets auto-creates when empty) |
 
-AI engine flow: **OpenRouter first** (15 s deadline), then NVIDIA Nemotron Ultra, then Lightning as last resort — every response reports which provider actually answered.
+Engine flow: OpenRouter first (15s deadline), then NVIDIA Nemotron Ultra -> Lightning as fallback. Response includes which provider answered.
 
 ---
 
-## 🧪 Running Unit Tests
+## Running Tests
 
 Fully offline (mocked LLM, stubbed Google/Telegram HTTP):
 
@@ -165,14 +165,14 @@ OPENROUTER_API_KEY=test-key python -m unittest discover -s tests -v
 
 ---
 
-## ☁️ Production Deployment
+## Deployment
 
 - **Backend (Render / Railway):** build `pip install -r requirements.txt`, start `uvicorn backend.api:app --host 0.0.0.0 --port $PORT` (Procfile included); set env vars and mount the Google credentials JSON as a secret file.
 - **Frontend (Vercel):** deploy `frontend/` and set `BACKEND_INTERNAL_URL` to your backend — the Next server proxies `/backend-api/*` same-origin, so no CORS entry is needed.
 
 ---
 
-## ⚠️ Limitations & Roadmap
+## Limitations & Roadmap
 
 - In-memory sessions and per-process integration state (reset on restart); JSON-file memory.
 - Telegram loop is single-process — use **fetch mode** when scaling to several replicas.
@@ -183,15 +183,15 @@ OPENROUTER_API_KEY=test-key python -m unittest discover -s tests -v
 
 ---
 
-## 🩺 Troubleshooting
+## Troubleshooting
 
 - **`socket hang up` / proxy error on `/analyze`:** slow LLM turn vs. dev-proxy timeout — pull latest code and re-run `run_all` (browser now talks to FastAPI directly).
 - **`503 llm_not_configured`:** `OPENROUTER_API_KEY` missing from the server-side `.env`.
 - **Drive/Sheets Connect 409 / 502:** credentials file missing or invalid (409), or Google refused them — share the folder/spreadsheet with the service account `client_email` (502).
 - **Bot connected but never replies:** check `GET /api/telegram/conversation/status`; on serverless use fetch mode; `409 Conflict` means another poller holds the same token.
 
-Full troubleshooting, repository layout, integration endpoint tables and the demo walkthrough live in the **[📚 Deep Dive](docs/DEEP_DIVE.md)**.
+Full troubleshooting, integration endpoint tables and demo walkthrough in [DEEP_DIVE.md](docs/DEEP_DIVE.md).
 
 ---
 
-Made with 🛡️ for scam research and threat intelligence.
+Built for scam research and threat intelligence. Team TraceAI — Hackathon 2024

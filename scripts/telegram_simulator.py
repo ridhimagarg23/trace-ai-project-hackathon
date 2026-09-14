@@ -1,43 +1,4 @@
-"""
-telegram_simulator.py
-=====================
-A local stand-in for Telegram's Bot API plus a fake OpenAI-compatible
-gateway, so the whole Telegram loop can be exercised without a real bot
-token and without spending LLM credits.
-
-Use it to watch the bot answer messages from the dashboard:
-
-    # terminal 1 - the fakes (prints the env vars to export)
-    .venv/bin/python scripts/telegram_simulator.py
-
-    # terminal 2 - the real backend pointed at the fakes
-    TELEGRAM_BOT_TOKEN="99999:SIMULATOR" \
-    TELEGRAM_API_BASE="http://127.0.0.1:8099" \
-    OPENROUTER_API_KEY="simulator-key" \
-    OPENROUTER_BASE_URL="http://127.0.0.1:8098/v1" \
-    .venv/bin/uvicorn backend.api:app --port 8001
-
-    # terminal 3 - the scammer writes to the bot
-    curl -X POST http://127.0.0.1:8099/_push \
-         -H 'Content-Type: application/json' \
-         -d '{"chat_id": 424242, "text": "Your card is blocked, verify now"}'
-
-    # ...and see what the bot answered:
-    curl http://127.0.0.1:8099/_state
-
-The Bot API surface is faithful where it matters:
-
-* ``getMe`` / ``deleteWebhook`` / ``setMyCommands`` / ``getUpdates`` /
-  ``sendMessage`` / ``sendChatAction``;
-* a registered webhook makes ``getUpdates`` answer HTTP 409 exactly like
-  Telegram does (the failure mode that makes a bot look mute);
-* ``getUpdates`` without an ``offset`` drains the queue; with an offset
-  it only returns newer updates and re-delivers the rest next time -
-  the same cursor semantics the real API has.
-
-Nothing here is imported by the application: it exists for demos,
-manual testing and ``scripts/e2e_telegram_check.py``.
-"""
+"""Telegram simulator for local testing"""
 
 from __future__ import annotations
 
@@ -72,9 +33,7 @@ REPORT_JSON = {
 }
 
 
-# ------------------------------------------------------------------
 # Fake Telegram Bot API
-# ------------------------------------------------------------------
 
 class FakeTelegramState:
     """In-memory stand-in for Telegram's update queue + outbox."""
@@ -316,9 +275,7 @@ def make_fake_telegram_handler(state: FakeTelegramState, bot_token: str = BOT_TO
     return Handler
 
 
-# ------------------------------------------------------------------
 # Fake OpenAI-compatible gateway
-# ------------------------------------------------------------------
 
 def make_fake_llm_handler():
     """A tiny /v1/chat/completions server for the three agents."""
@@ -375,9 +332,7 @@ def make_fake_llm_handler():
     return Handler
 
 
-# ------------------------------------------------------------------
 # Server helpers
-# ------------------------------------------------------------------
 
 def start_telegram_server(port: int = 0):
     """Start the fake Bot API. ``port=0`` picks a free port."""

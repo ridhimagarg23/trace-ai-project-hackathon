@@ -1,70 +1,4 @@
-"""
-telegram_routes.py
-==================
-Minimal, test-oriented Telegram endpoints for SCAMNET.
-
-These routes exist to PROVE that Telegram communication works
-end-to-end before any AI agent is wired to the channel:
-
-    GET  /api/telegram/messages   - fetch recent incoming messages
-                                    (Bot API long polling, normalized)
-    POST /api/telegram/send-test  - send one test text message to a
-                                    specific chat_id
-
-Phase 2A conversational loop (Telegram <-> ConversationAgent):
-
-    POST /api/telegram/conversation/message - run ONE inbound message
-                                    through the investigation +
-                                    conversation pipeline and return
-                                    the persona reply (no polling)
-    POST /api/telegram/conversation/start   - start the background
-                                    polling worker (it answers every
-                                    inbound message automatically)
-    POST /api/telegram/conversation/stop    - stop the worker
-    POST /api/telegram/conversation/fetch   - poll ONCE and answer
-                                    everything that arrived: the same
-                                    loop for hosts where a background
-                                    thread cannot stay alive (call it
-                                    from cron / an uptime pinger)
-    POST /api/telegram/conversation/wake    - send the liveness greeting
-                                    to one chat (proves the outbound
-                                    path without waiting for a message)
-    GET  /api/telegram/conversation/status  - honest worker + chat
-                                    state snapshot (never 409)
-    POST /api/telegram/conversation/reset   - drop one chat's state
-
-Two delivery models, same brain
--------------------------------
-* **push**  - ``/conversation/start`` long-polls on a background thread;
-              replies arrive in seconds. Requires a process that keeps
-              running between requests.
-* **fetch** - ``/conversation/fetch`` polls once per call; works on
-              hosts that freeze the process between requests. Both use
-              ONE shared worker (``tools/telegram_conversation_worker``)
-              and can never poll concurrently, so a message is never
-              answered twice.
-
-Connection status itself is served by the existing integration
-endpoints in backend/api.py:
-
-    GET  /api/integrations                       (status of all apps)
-    POST /api/integrations/telegram/connect      (real getMe verify)
-
-Safety rules enforced here
---------------------------
-* The routes that would talk to the bot (messages, send-test,
-  conversation/message, conversation/start) require the integration to
-  be genuinely connected first (409 otherwise) - no anonymous drive-by
-  usage. Status/stop/reset stay available so an operator can always
-  observe and shut the loop down.
-* Inputs are strictly validated by pydantic (chat_id int, text 1-4096
-  chars, limit/timeout/ack bounded) - no arbitrary payloads.
-* Only normalized message data is returned; the bot token never
-  appears in a response, and upstream failures surface as sanitised
-  502s (see TelegramAPIError / _redact in integrations/telegram).
-* Nothing is persisted: messages are fetched on demand and the update
-  acknowledgement cursor lives in server memory only.
-"""
+"""Telegram API routes"""
 
 import logging
 from typing import Optional
@@ -100,9 +34,7 @@ router = APIRouter(
 )
 
 
-# --------------------------------------------------
 # Request models
-# --------------------------------------------------
 
 class SendTestMessageRequest(BaseModel):
     """
@@ -199,9 +131,7 @@ class ResetChatRequest(BaseModel):
         return value
 
 
-# --------------------------------------------------
 # Shared guards
-# --------------------------------------------------
 
 def _require_llm_configured() -> None:
     """
@@ -281,9 +211,7 @@ def _connection_info(integration) -> dict:
         return {}
 
 
-# --------------------------------------------------
 # Endpoints
-# --------------------------------------------------
 
 @router.get("/messages")
 def telegram_recent_messages(
@@ -393,9 +321,7 @@ def telegram_send_test(request: SendTestMessageRequest):
     }
 
 
-# --------------------------------------------------
 # Phase 2A: Telegram <-> ConversationAgent loop
-# --------------------------------------------------
 # These endpoints expose tools/conversation_service.py (one turn) and
 # tools/telegram_conversation_worker.py (the background polling loop).
 # Only the two routes that need a working bot are guarded by

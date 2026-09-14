@@ -1,20 +1,4 @@
-"""
-conversation_session.py
-=======================
-In-memory conversation state for ONE undercover investigation.
-
-A session is the back-and-forth chat between the scammer (raw
-messages pasted by the analyst) and the TraceAI decoy persona
-(generated replies).
-
-Message records are stored as dictionaries of the shape:
-
-    {"role": "scammer" | "traceai", "message": "<text>"}
-
-The formatted history string produced by ``get_history()`` is fed
-into the ConversationAgent on every turn so the LLM never loses
-track of what was already said.
-"""
+"""Conversation session"""
 
 
 class ConversationSession:

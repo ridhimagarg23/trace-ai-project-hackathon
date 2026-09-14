@@ -1,29 +1,4 @@
-"""
-test_telegram_delivery.py
-=========================
-Regression tests for the Telegram delivery path - everything that has
-to work for "the scammer messages the bot, the bot replies" to be true
-on a real deployment:
-
-* ``connect()`` clears a stale webhook (a registered webhook makes
-  ``getUpdates`` answer HTTP 409 forever, which looks exactly like a
-  mute bot) and refuses to claim a connection it cannot honour;
-* ``/start`` - the message Telegram sends by itself when a chat opens a
-  bot, and the operator's liveness probe - is answered WITHOUT the LLM,
-  without opening a case, and in any of Telegram's three spellings
-  (``/start``, ``/START``, ``/start@my_bot``);
-* replies are length-checked and truncated on Telegram's own unit
-  (UTF-16 code units - 4096 emoji are NOT 4096 characters);
-* a rate-limited send (HTTP 429 + ``retry_after``) is retried once;
-* dead credentials stop the loop loudly instead of hammering Telegram;
-* fetch mode works even after ``stop()`` (regression: the worker-wide
-  stop event used to suppress every fetch that followed a stop);
-* the HTTP endpoints expose all of it honestly.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for telegram delivery"""
 
 import json
 import time
@@ -63,9 +38,7 @@ from tests.test_telegram_conversation import (
 FAKE_TOKEN = "123456:TEST-FAKE-TOKEN-do-not-leak"
 
 
-# --------------------------------------------------
 # HTTP transport stubs (mirror tests/test_telegram_integration.py)
-# --------------------------------------------------
 
 class StubResponse:
     def __init__(self, payload, status_code=200, json_error=False):
@@ -133,9 +106,7 @@ def conflict_error():
     )
 
 
-# --------------------------------------------------
 # 1. Webhook conflict (the classic "bot never replies")
-# --------------------------------------------------
 
 class TestWebhookHandling(unittest.TestCase):
 
@@ -201,9 +172,7 @@ class TestWebhookHandling(unittest.TestCase):
         self.assertFalse(integration.last_poll_had_pending)
 
 
-# --------------------------------------------------
 # 2. UTF-16 length handling (Telegram's real limit)
-# --------------------------------------------------
 
 class TestUtf16Limits(unittest.TestCase):
 
@@ -247,9 +216,7 @@ class TestUtf16Limits(unittest.TestCase):
         self.assertEqual(result["message_id"], 7)
 
 
-# --------------------------------------------------
 # 3. Chat actions / command menu
-# --------------------------------------------------
 
 class TestBotApiOperations(unittest.TestCase):
 
@@ -287,9 +254,7 @@ class TestBotApiOperations(unittest.TestCase):
                 integration.set_my_commands(bad)
 
 
-# --------------------------------------------------
 # 4. /start command parsing + service handling
-# --------------------------------------------------
 
 class TestStartCommand(unittest.TestCase):
 
@@ -341,9 +306,7 @@ class TestStartCommand(unittest.TestCase):
                 service.handle_start(bad)
 
 
-# --------------------------------------------------
 # 5. Worker behaviour
-# --------------------------------------------------
 
 class TestWorkerDelivery(unittest.TestCase):
 
@@ -594,9 +557,7 @@ class TestWorkerDelivery(unittest.TestCase):
         self.assertLessEqual(len(worker.delivered), 100)
 
 
-# --------------------------------------------------
 # 6. Fetch mode
-# --------------------------------------------------
 
 class TestFetchMode(unittest.TestCase):
 
@@ -695,9 +656,7 @@ class TestFetchMode(unittest.TestCase):
         self.assertIn("LLM provider down", result["stats"]["last_error"])
 
 
-# --------------------------------------------------
 # 7. HTTP endpoints
-# --------------------------------------------------
 
 class TestDeliveryEndpoints(unittest.TestCase):
 
@@ -947,9 +906,7 @@ def _real_service() -> TelegramConversationService:
     return TelegramConversationService(archive=False)
 
 
-# --------------------------------------------------
 # 8. Memory archive under concurrent writers
-# --------------------------------------------------
 
 class TestMemoryArchiveConcurrency(unittest.TestCase):
 

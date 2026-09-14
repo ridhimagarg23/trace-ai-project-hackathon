@@ -1,32 +1,4 @@
-"""
-Gmail integration client for SCAMNET.
-
-Role in SCAMNET
----------------
-Gmail is the **evidence inbox / outbound channel**: analysts forward a
-scam e-mail to the monitored mailbox, SCAMNET reads it as raw material
-for an investigation and can send the finished report to a stakeholder
-address - all through the same honest integration contract as Telegram
-(``integrations/telegram``) and the other Google apps.
-
-Implemented flow (real Gmail API, no fakes)
--------------------------------------------
-* ``connect()``  - loads the server-side credentials JSON, mints an
-  OAuth access token and calls ``users.getProfile`` before marking the
-  integration connected.
-* ``check_health()`` - cheap authorized ``getProfile`` ping (TTL-cached).
-* ``list_messages()`` / ``get_message()`` - read recent mail (evidence).
-* ``send_email()`` - send a plain-text report e-mail.
-* ``disconnect()`` - drops the cached credentials/session state.
-
-Credentials
------------
-Point ``GOOGLE_GMAIL_CREDENTIALS_FILE`` (or the shared
-``GOOGLE_CREDENTIALS_FILE``) at a credentials JSON. Gmail requires a
-**user** (OAuth "authorized_user" with a refresh token), because service
-accounts only get Gmail access through Google Workspace domain-wide
-delegation - a plain service account will honestly fail to connect.
-"""
+"""Gmail integration client for SCAMNET."""
 
 import base64
 import re
@@ -80,9 +52,7 @@ class GmailIntegration(GoogleApiIntegration):
         "Google Workspace domain-wide delegation to use Gmail."
     )
 
-    # ----------------------------------------------
     # Lifecycle
-    # ----------------------------------------------
 
     def verify_connection(self) -> Dict[str, Any]:
         """
@@ -109,9 +79,7 @@ class GmailIntegration(GoogleApiIntegration):
             "threads_total": profile.get("threadsTotal"),
         }
 
-    # ----------------------------------------------
     # Gmail operations
-    # ----------------------------------------------
 
     def list_messages(
         self,

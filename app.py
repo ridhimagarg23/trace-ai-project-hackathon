@@ -1,17 +1,4 @@
-"""
-app.py
-======
-TraceAI CLI Application
-
-Runs a single-pass investigation from the terminal - handy for quick
-manual testing of a message without starting the API server:
-
-    export OPENROUTER_API_KEY=...
-    python app.py
-
-Flow: investigate the pasted message -> build the persona state ->
-save to memory -> generate the honeypot reply -> print a report.
-"""
+"""CLI entry - quick test without server"""
 
 from agents.investigation_agent import InvestigationAgent
 from agents.conversation_agent import ConversationAgent
@@ -32,26 +19,20 @@ def main():
     print(" TraceAI - AI Scam Investigation Platform ")
     print("=" * 60)
 
-    # -------------------------------------------------
     # 1. Ask the analyst for the raw scammer payload
-    # -------------------------------------------------
 
     message = input(
         "\nPaste suspicious message:\n\n"
     )
 
-    # ---------------------------------
     # 2. Investigation: verdict + IOCs + risk score
-    # ---------------------------------
 
     investigation = InvestigationAgent().run(
         message
     )
 
-    # ---------------------------------
     # 3. Adaptive Investigation Engine:
     #    pick persona profile + first objective/strategy
-    # ---------------------------------
 
     engine = AdaptiveInvestigationEngine()
 
@@ -59,9 +40,7 @@ def main():
         investigation.threat_type
     )
 
-    # ---------------------------------
     # 4. Conversation Session: record the scammer message
-    # ---------------------------------
 
     session = ConversationSession()
 
@@ -69,9 +48,7 @@ def main():
         message
     )
 
-    # ---------------------------------
     # 5. Persist the investigation into threat memory
-    # ---------------------------------
 
     memory = MemoryManager()
 
@@ -79,9 +56,7 @@ def main():
         investigation.model_dump()
     )
 
-    # ---------------------------------
     # 6. Conversation: generate the persona's reply
-    # ---------------------------------
 
     conversation = ConversationAgent().run(
         investigation=investigation,
@@ -94,18 +69,14 @@ def main():
         conversation.reply
     )
 
-    # ---------------------------------
     # 7. Report: compile the markdown investigation report
-    # ---------------------------------
 
     report = ReportAgent().run(
         investigation=investigation,
         conversation=conversation
     )
 
-    # ---------------------------------
     # 8. Print the complete output
-    # ---------------------------------
 
     print("\n" + "=" * 60)
     print(" INVESTIGATION RESULT ")

@@ -1,33 +1,4 @@
-"""
-run_all.py
-==========
-Start the WHOLE project with one command: FastAPI backend + Next.js
-dashboard (and optionally the Streamlit UI), with proper shutdown on
-Ctrl+C.
-
-    python scripts/run_all.py                 # backend + dashboard
-    python scripts/run_all.py --streamlit     # + Streamlit UI (port 8501)
-    python scripts/run_all.py --no-frontend   # backend only
-    python scripts/run_all.py --backend-port 9000 --frontend-port 4000
-
-What it does for you
---------------------
-* uses the project virtualenv when one exists (``.venv``), so the right
-  dependencies are loaded no matter which Python started the script;
-* checks the root ``.env`` and tells you exactly which keys are missing
-  (it still starts - the backend runs in degraded mode without an LLM key);
-* runs ``npm install`` in ``frontend/`` the first time (skip with
-  ``--skip-install``);
-* points the browser at FastAPI directly (``NEXT_PUBLIC_API_URL``) so
-  slow ``/analyze`` turns never hit the Next.js proxy's ~30 s ceiling
-  (opt out with ``--use-proxy``);
-* waits until each service actually answers before printing the URLs;
-* streams every log line prefixed with ``[api]`` / ``[ui]`` / ``[streamlit]``;
-* Ctrl+C (or a crash) stops every child process, including on Windows.
-
-Nothing here is needed in production - hosting platforms start the
-backend from the ``Procfile`` and the dashboard from ``frontend/``.
-"""
+"""Dev runner - backend + frontend"""
 
 from __future__ import annotations
 
@@ -56,9 +27,7 @@ REQUIRED_KEYS = ("OPENROUTER_API_KEY", "TELEGRAM_BOT_TOKEN")
 IS_WINDOWS = os.name == "nt"
 
 
-# ------------------------------------------------------------------
 # Small helpers
-# ------------------------------------------------------------------
 
 def venv_python() -> str:
     """Prefer the project virtualenv's interpreter when it exists."""
@@ -289,9 +258,7 @@ def clear_next_dev_cache() -> bool:
     return False
 
 
-# ------------------------------------------------------------------
 # Process supervision
-# ------------------------------------------------------------------
 
 class Service:
     """One child process whose output is streamed with a prefix."""
@@ -385,9 +352,7 @@ def wait_for_port(port: int, service: Service, timeout: float = 90.0) -> bool:
     return port_is_open(port)
 
 
-# ------------------------------------------------------------------
 # Main
-# ------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
 
@@ -441,9 +406,7 @@ def main() -> int:
     if python != sys.executable:
         print(f"[ok] Using the project virtualenv: {python}")
 
-    # ----------------------------------------------------------
     # Frontend dependencies (first run only)
-    # ----------------------------------------------------------
     if not args.no_frontend:
 
         if not (FRONTEND_DIR / "node_modules").exists():
@@ -472,9 +435,7 @@ def main() -> int:
         if not clear_next_dev_cache():
             return 1
 
-    # ----------------------------------------------------------
     # Environment for the children
-    # ----------------------------------------------------------
     # NEXT_PUBLIC_API_URL makes the browser call FastAPI directly
     # (no 30 s proxy ceiling on slow /analyze turns); BACKEND_INTERNAL_URL
     # keeps the /backend-api proxy working as a fallback. See
@@ -498,9 +459,7 @@ def main() -> int:
         if not IS_WINDOWS:  # Windows handlers are limited; Ctrl+C still works
             signal.signal(signal.SIGTERM, shutdown)
 
-        # ------------------------------------------------------
         # 1. Backend API
-        # ------------------------------------------------------
         # --timeout-keep-alive 60: the default (5 s) closes idle keep-alive
         # connections so aggressively that a pooled proxy connection can be
         # found dead on reuse (sporadic ECONNRESET on the /backend-api path).
@@ -522,9 +481,7 @@ def main() -> int:
             print("[x] The backend did not start - see the [api] lines above.")
             shutdown()
 
-        # ------------------------------------------------------
         # 2. Dashboard (Next.js)
-        # ------------------------------------------------------
         if not args.no_frontend:
 
             print(f"[..] Dashboard: http://127.0.0.1:{args.frontend_port}")
@@ -543,9 +500,7 @@ def main() -> int:
             if not wait_for_port(args.frontend_port, services[-1], timeout=120):
                 print("[!] The dashboard did not come up - see [ui] lines above.")
 
-        # ------------------------------------------------------
         # 3. Streamlit (optional)
-        # ------------------------------------------------------
         if args.streamlit:
 
             print(f"[..] Streamlit: http://127.0.0.1:{args.streamlit_port}")
@@ -566,9 +521,7 @@ def main() -> int:
             if not wait_for_port(args.streamlit_port, services[-1], timeout=60):
                 print("[!] Streamlit did not come up - see [streamlit] lines.")
 
-        # ------------------------------------------------------
         # Ready banner
-        # ------------------------------------------------------
         env_values = read_env_file()
 
         print("\n" + "=" * 68)
@@ -606,9 +559,7 @@ def main() -> int:
 
         print("\n  Ctrl+C stops every service.\n")
 
-        # ------------------------------------------------------
         # Supervise: if a child dies unexpectedly, shut down cleanly
-        # ------------------------------------------------------
         while True:
             time.sleep(1)
 

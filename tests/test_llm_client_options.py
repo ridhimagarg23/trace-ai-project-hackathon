@@ -1,18 +1,4 @@
-"""
-test_llm_client_options.py
-==========================
-Offline unit tests for LLMClient request options and per-agent budgets.
-
-``POST /analyze`` runs three sequential LLM calls, so every agent passes
-a ``max_tokens`` budget matched to its output shape: small JSON verdicts
-need far fewer tokens than the markdown report, and the cap keeps one
-slow/verbose model from stalling a turn (or the per-token bill) without
-bound. These tests lock both the plumbing and the budgets.
-
-Run with:
-
-    OPENROUTER_API_KEY=test-key python -m unittest discover -s tests
-"""
+"""Tests for llm client options"""
 
 import unittest
 from unittest.mock import MagicMock, patch
